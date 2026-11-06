@@ -3,713 +3,234 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>데이텀(DATUM)(보안 뷰어)</title>
+    <title>데이텀(DATUM) - 배정 DB 관리</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
             -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;
-            font-family: 'Malgun Gothic', sans-serif; background-color: #f8fafc;
+            font-family: 'Malgun Gothic', sans-serif; background-color: #FFFFFF; color: #0F172A;
         }
-        body.blurred { filter: blur(15px); transition: filter 0.2s ease; }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        .capture-protect-mode { filter: blur(15px) !important; opacity: 0.1 !important; pointer-events: none !important; }
     </style>
 </head>
-<body class="min-h-screen flex flex-col custom-scrollbar relative">
+<body class="min-h-screen flex flex-col bg-white relative">
 
-    <header class="bg-slate-900 text-white p-4 xl:p-5 shadow-md flex justify-between items-center sticky top-0 z-40 w-full xl:min-w-[1400px]">
-        <div>
-            <h1 class="text-lg xl:text-xl font-black tracking-tight">나의 배정 DB 리스트</h1>
-            <p class="text-[10px] xl:text-xs text-slate-400 mt-1">고객 정보 보호를 위해 화면 캡처 및 복사가 금지됩니다.</p>
+    <header class="bg-white border-b border-slate-200 p-4 sticky top-0 z-40 flex justify-between items-center">
+        <div class="flex items-center space-x-2">
+            <div class="w-7 h-7 rounded bg-blue-600 text-white font-black flex items-center justify-center text-sm">D</div>
+            <h1 class="text-base xl:text-lg font-black text-slate-900">나의 배정 DB 리스트</h1>
         </div>
-        <div class="flex items-center gap-2 xl:gap-3">
-            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span id="agentNameDisplay" class="font-bold text-sm xl:text-lg text-emerald-400">로딩 중...</span>
+        <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <span id="agentNameDisplay" class="font-bold text-sm text-slate-800">로딩 중...</span>
         </div>
     </header>
 
-    <main class="w-full p-3 xl:p-6 flex-grow overflow-x-auto pb-32">
+    <main class="w-full p-3 xl:p-6 flex-grow overflow-x-auto pb-28">
         <div id="dbContainer" class="w-full">
-            <div class="text-center py-20 text-slate-500 font-bold">
-                데이터를 불러오는 중입니다...
-            </div>
+            <div class="text-center py-20 text-slate-400 font-bold text-sm">데이터를 불러오는 중입니다...</div>
         </div>
     </main>
 
-    <!-- ⭐️ 계약 정보 입력 팝업창 -->
-    <div id="contractModal" class="hidden fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
-            <div class="bg-slate-800 p-4 flex justify-between items-center text-white">
-                <h2 class="font-bold text-lg">📝 계약 세부 정보 입력</h2>
-                <div class="flex gap-2">
-                    <button onclick="addContractRow()" class="bg-emerald-500 hover:bg-emerald-600 px-3 py-1.5 rounded font-bold text-xs transition">➕ 추가</button>
-                    <button onclick="removeContractRow()" class="bg-rose-500 hover:bg-rose-600 px-3 py-1.5 rounded font-bold text-xs transition">➖ 삭제</button>
-                </div>
-            </div>
-            
-            <div class="p-5 overflow-y-auto bg-slate-50 custom-scrollbar flex-grow" id="contractRowsContainer"></div>
-            
-            <div class="bg-white p-4 border-t border-slate-200 flex justify-end gap-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-10">
-                <button onclick="closeContractModal()" class="px-5 py-2.5 bg-slate-200 hover:bg-slate-300 rounded-lg font-bold text-sm text-slate-700 transition">취소</button>
-                <button onclick="confirmContractModal()" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-sm shadow-md transition">✅ 확인 및 계산</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ⭐️ 신규: 스케줄 입력 팝업창 -->
-    <div id="scheduleInputModal" class="hidden fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden flex flex-col">
-            <div class="bg-blue-600 p-4 flex justify-between items-center text-white">
-                <h2 class="font-bold text-lg flex items-center gap-2"><span>📅</span> <span>일정 스케줄 등록</span></h2>
-                <button onclick="closeScheduleModal()" class="text-white hover:text-slate-200 text-xl font-bold">✕</button>
-            </div>
-            
-            <div class="p-5 bg-slate-50 space-y-4">
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">1. 상담 유형 선택</label>
-                    <select id="schType" class="w-full p-2 border border-slate-300 rounded-lg focus:border-blue-500 focus:outline-none text-sm font-bold text-slate-700 bg-white shadow-sm">
-                        <option value="">- 선택 -</option>
-                        <option value="초회상담">초회상담</option>
-                        <option value="2차상담">2차상담</option>
-                        <option value="3차상담">3차상담</option>
-                        <option value="4차상담">4차상담</option>
-                        <option value="계약">계약</option>
-                        <option value="계약관리">계약관리</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">2. 날짜 및 시간</label>
-                    <input type="datetime-local" id="schDateTime" class="w-full p-2 border border-slate-300 rounded-lg focus:border-blue-500 focus:outline-none text-sm font-bold text-slate-700 bg-white shadow-sm">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">3. 장소 및 메모</label>
-                    <input type="text" id="schLocation" placeholder="예: 강남역 스벅, 방문 상담 등" class="w-full p-2 border border-slate-300 rounded-lg focus:border-blue-500 focus:outline-none text-sm bg-white shadow-sm">
-                </div>
-            </div>
-            
-            <div class="bg-white p-4 border-t border-slate-200 flex justify-end gap-3 z-10">
-                <button onclick="clearScheduleInput()" class="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg font-bold text-sm transition">입력 지우기</button>
-                <div class="flex-grow"></div>
-                <button onclick="closeScheduleModal()" class="px-5 py-2 bg-slate-200 hover:bg-slate-300 rounded-lg font-bold text-sm text-slate-700 transition">취소</button>
-                <button onclick="confirmScheduleModal()" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-sm shadow-md transition">적용</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 우측 하단 고정 전체 저장 버튼 -->
-    <div class="fixed bottom-6 right-6 xl:bottom-10 xl:right-10 z-50">
-        <button id="globalSaveBtn" onclick="saveAllChanges()" class="bg-blue-600 hover:bg-blue-700 text-white font-black py-3 px-5 xl:py-4 xl:px-8 rounded-full shadow-[0_10px_25px_-5px_rgba(37,99,235,0.6)] transition-all hover:scale-105 flex items-center gap-2 xl:gap-3 border-2 border-white">
-            <span id="globalSaveText" class="text-sm xl:text-[15px] tracking-wide">💾 전체 저장</span>
+    <!-- 우측 하단 저장 버튼 -->
+    <div class="fixed bottom-6 right-6 z-50">
+        <button id="globalSaveBtn" onclick="saveAllChanges()" class="bg-blue-600 hover:bg-blue-700 text-white font-black py-3.5 px-7 rounded-full shadow-lg transition flex items-center gap-2">
+            <span id="globalSaveText" class="text-sm">💾 변경사항 저장</span>
         </button>
     </div>
 
     <script>
-        document.addEventListener('contextmenu', e => e.preventDefault()); 
-        document.addEventListener('copy', e => { e.preventDefault(); alert('개인정보 보호를 위해 복사는 금지되어 있습니다.'); }); 
-        document.addEventListener('keydown', e => {
-            if ((e.ctrlKey || e.metaKey) && (e.key === 'p' || e.key === 's' || e.key === 'c')) e.preventDefault(); 
-        });
-        window.addEventListener('blur', () => {
-            if (document.activeElement && document.activeElement.tagName === 'IFRAME') return;
-            document.body.classList.add('blurred');
-        });
-        window.addEventListener('focus', () => document.body.classList.remove('blurred'));
-
-        // ⭐️ 기존 웹앱 URL 유지
         const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxM8jHtjpXz91t6X-l54CNSoPKAVMuvpoqb3_V5V71X3r7Cx8Ah3OVvyW_fWpCc3T62vg/exec"; 
-        
         const currentAgent = localStorage.getItem('rion_logged_user');
-        let modifiedRows = new Set(); 
-        let currentModalIndex = null; 
-        let currentModalPrefix = ''; 
-
-        // ⭐️ 신규: 스케줄 모달용 변수
-        let currentSchIndex = null;
-        let currentSchPrefix = '';
+        let modifiedRows = new Set();
 
         if (!currentAgent) {
-            alert('보안 접근입니다. 메인 홈페이지에서 로그인을 먼저 진행해주세요.');
+            alert('메인 홈페이지에서 로그인을 먼저 진행해주세요.');
             window.close();
         } else {
-            document.getElementById('agentNameDisplay').innerText = `${currentAgent} 팀장님`;
+            document.getElementById('agentNameDisplay').innerText = `${currentAgent} 님`;
             loadAssignedDBs();
         }
 
         async function loadAssignedDBs() {
-            modifiedRows.clear(); 
+            modifiedRows.clear();
             try {
                 const response = await fetch(`${GAS_WEBAPP_URL}?agent=${encodeURIComponent(currentAgent)}`);
                 const data = await response.json();
                 renderDBList(data);
             } catch (error) {
-                document.getElementById('dbContainer').innerHTML = `
-                    <div class="text-center py-20 text-rose-500 font-bold">데이터 서버 오류<br><span class="text-xs mt-2 block">${error.message}</span></div>`;
+                document.getElementById('dbContainer').innerHTML = `<div class="text-center py-20 text-rose-500 font-bold">데이터 로드 오류</div>`;
             }
+        }
+
+        function generateStatusSelect(id, val, index) {
+            return `
+                <select id="${id}" onchange="markModified(${index})" class="w-full p-2 border border-slate-300 rounded-lg text-xs font-bold text-slate-800 bg-white focus:border-blue-600 focus:outline-none">
+                    <option value="" ${val===''?'selected':''}>- 현황 선택 -</option>
+                    <option value="부재" ${val==='부재'?'selected':''}>부재</option>
+                    <option value="재통화예정" ${val==='재통화예정'?'selected':''}>재통화예정</option>
+                    <option value="방문예정" ${val==='방문예정'?'selected':''}>방문예정</option>
+                    <option value="상담진행" ${val==='상담진행'?'selected':''}>상담진행</option>
+                    <option value="계약완료" ${val==='계약완료'?'selected':''}>계약완료</option>
+                    <option value="거절" ${val==='거절'?'selected':''}>거절 (회수)</option>
+                    <option value="결번/불량" ${val==='결번/불량'?'selected':''}>결번/불량 (A/S)</option>
+                    <option value="본인설계사" ${val==='본인설계사'?'selected':''}>본인설계사 (A/S)</option>
+                </select>
+            `;
         }
 
         function renderDBList(dbs) {
             const container = document.getElementById('dbContainer');
-            if(!dbs || dbs.length === 0) { 
-                container.innerHTML = "<div class='text-center py-20 text-slate-500 font-bold'>현재 배정된 대기 DB가 없습니다.</div>"; 
-                return; 
+            if (!dbs || dbs.length === 0) {
+                container.innerHTML = "<div class='text-center py-20 text-slate-400 font-bold text-sm'>현재 배정된 DB가 없습니다.</div>";
+                return;
             }
-            
+
             let desktopHtml = '';
             let mobileHtml = '';
 
             dbs.forEach((db, index) => {
-                const valTa1 = db.ta1 || '';
-                const valTa2 = db.ta2 || '';
-                const valTa3 = db.ta3 || '';
-                const valTa4 = db.ta4 || '';
                 const valStatus = db.status || '';
-                
-                const valCount = db.contractCount ? db.contractCount + '건' : '';
-                const valPremium = db.contractPremium ? Number(db.contractPremium).toLocaleString() + '원' : '';
                 const valNote = db.note || '';
-                const valSchedule = db.schedule || '';
 
-          // ==========================================
-                // 💻 1. 데스크톱 뷰
-                // ==========================================
+                // 1. PC 뷰
                 desktopHtml += `
-                    <tr class="bg-slate-50 font-medium border-b border-slate-200 hover:bg-slate-100 transition">
-                        <td class="p-2 border-r border-slate-200 font-bold text-slate-500">${index + 1}</td>
-                        <td class="p-2 border-r border-slate-200">${db.assignDate || '-'}</td>
-                        <td class="p-2 border-r border-slate-200 font-bold text-blue-600">${db.phone || '-'}</td>
-                        <td class="p-2 border-r border-slate-200"><span class="bg-blue-100 text-blue-800 text-[10px] font-bold px-1.5 py-0.5 rounded">${db.region || '-'}</span></td>
-                        <td class="p-2 border-r border-slate-200 font-bold text-sm text-slate-900">${db.customerName || '-'}</td>
-                        <td class="p-2 border-r border-slate-200">${db.sido || '-'}</td>
-                        <td class="p-2 border-r border-slate-200">${db.gugun || '-'}</td>
-                        <td class="p-2 border-r border-slate-200">${db.dong || '-'}</td>
-                        <td class="p-2 border-r border-slate-200">${db.birth || '-'}</td>
-                        <td class="p-2 border-r border-slate-200">${db.gender || '-'}</td>
-                        <td class="p-2 border-r border-slate-200 text-left whitespace-normal break-keep text-[11px] leading-snug">${db.memo || '-'}</td>
-                        <td class="p-2 border-r border-slate-200 font-bold">${currentAgent}</td>
-                        <td class="p-2 border-r border-slate-200 font-bold text-emerald-600">${valStatus || '-'}</td>
-                        <td class="p-2 border-r border-slate-200 text-[10px]">${db.assignDateTime || '-'}</td>
-                        <td class="p-2"><span class="text-rose-600 font-black text-[11px]">${db.timeLimit || '-'}</span></td>
+                    <tr class="bg-white border-b border-slate-200">
+                        <td class="p-2.5 border-r border-slate-200 font-bold text-slate-500">${index + 1}</td>
+                        <td class="p-2.5 border-r border-slate-200">${db.assignDate || '-'}</td>
+                        <td class="p-2.5 border-r border-slate-200 font-bold text-blue-600">${db.phone || '-'}</td>
+                        <td class="p-2.5 border-r border-slate-200 font-bold">${db.region || '-'}</td>
+                        <td class="p-2.5 border-r border-slate-200 font-black text-slate-900">${db.customerName || '-'}</td>
+                        <td class="p-2.5 border-r border-slate-200">${db.sido || ''} ${db.gugun || ''} ${db.dong || ''}</td>
+                        <td class="p-2.5 border-r border-slate-200">${db.birth || '-'} / ${db.gender || '-'}</td>
+                        <td class="p-2.5 border-r border-slate-200 text-left whitespace-normal text-[11px]">${db.memo || '-'}</td>
+                        <td class="p-2.5 border-r border-slate-200 text-[11px]">${db.assignDateTime || '-'}</td>
+                        <td class="p-2.5 text-rose-600 font-bold text-[11px]">${db.timeLimit || '-'}</td>
                     </tr>
-                    <tr class="border-b-4 border-slate-400">
-                        <td colspan="15" class="p-0 bg-white">
+                    <tr class="border-b-2 border-slate-300 bg-slate-50/60">
+                        <td colspan="10" class="p-2">
                             <input type="hidden" id="custName_${index}" value="${db.customerName}">
-                            <div id="edit_area_${index}" class="flex items-center w-full bg-amber-50 p-2 gap-2 transition-all">
-                                
-                           <!-- ⭐️ 수정됨: 가로를 100%로 펴서 시간을 확보하고, 우측 끝에 검은색 가림막(w-[45px])을 덮어 새창버튼만 지움 -->
-                                <div class="w-[20%] shrink-0 flex items-center pl-1">
-                                    <span class="text-[11px] font-bold text-slate-700 whitespace-nowrap shrink-0 tracking-tight mr-1.5">🎧 녹취</span>
-                                    <div class="flex-grow w-full relative overflow-hidden h-10 rounded border border-slate-300 shadow-sm bg-[#141414]">
-                                        ${db.audioUrl ? `<iframe src="${db.audioUrl.replace('uc?export=download&id=', 'file/d/')}/preview" style="position: absolute; top: -20px; left: 0; width: 100%; height: 150px; border: none;" allow="autoplay"></iframe><div class="absolute top-0 right-0 w-[45px] h-full bg-[#141414] z-10"></div>` : `<div class="w-full h-full flex items-center justify-center bg-slate-100 text-[10px] text-slate-400 font-bold">녹취 없음</div>`}
+                            <div id="edit_area_${index}" class="flex items-center gap-3 p-1.5 rounded-lg">
+                                <div class="w-[30%] flex items-center gap-2">
+                                    <span class="text-xs font-bold text-slate-700 shrink-0">🎧 녹취</span>
+                                    <div class="flex-grow relative overflow-hidden h-10 rounded border border-slate-300 bg-[#141414]">
+                                        ${db.audioUrl ? `<iframe src="${db.audioUrl.replace('uc?export=download&id=', 'file/d/')}/preview" style="position: absolute; top: -20px; left: 0; width: 100%; height: 150px; border: none;" allow="autoplay"></iframe><div class="absolute top-0 right-0 w-[45px] h-full bg-[#141414] z-10"></div>` : `<div class="w-full h-full flex items-center justify-center bg-slate-100 text-[11px] text-slate-400">녹취 없음</div>`}
                                     </div>
                                 </div>
-
-                                <div class="w-[5%] shrink-0">${generateTaSelect(`ta1_${index}`, '1차 TA', valTa1, index, '')}</div>
-                                <div class="w-[5%] shrink-0">${generateTaSelect(`ta2_${index}`, '2차 TA', valTa2, index, '')}</div>
-                                <div class="w-[5%] shrink-0">${generateTaSelect(`ta3_${index}`, '3차 TA', valTa3, index, '')}</div>
-                                <div class="w-[5%] shrink-0">${generateTaSelect(`ta4_${index}`, '4차 이상', valTa4, index, '')}</div>
-                                
-                                <div class="w-[12%] shrink-0">
-                                    <input type="text" id="schedule_${index}" value="${valSchedule}" readonly onclick="openScheduleModal(${index}, '')" placeholder="일정입력 (클릭)" class="w-full px-2 py-1.5 border border-slate-300 rounded focus:border-blue-500 focus:outline-none text-xs cursor-pointer hover:bg-blue-50 transition font-bold text-blue-700 bg-white">
+                                <div class="w-[20%]">
+                                    ${generateStatusSelect(`status_${index}`, valStatus, index)}
                                 </div>
-                                
-                                <div class="w-[6%] shrink-0">
-                                    <select id="status_${index}" onchange="handleStatusChange(${index}, '')" class="w-full p-1.5 border border-slate-300 rounded focus:border-blue-500 focus:outline-none text-xs font-bold text-slate-700 bg-white">
-                                        <option value="" ${valStatus===''?'selected':''}>- 진행현황 -</option>
-                                        <option value="상담 중" ${valStatus==='상담 중'?'selected':''}>상담 중</option>
-                                        <option value="상담완료" ${valStatus==='상담완료'?'selected':''}>상담완료</option>
-                                        <option value="계약" ${valStatus==='계약'?'selected':''}>계약</option>
-                                        <option value="장기배양(심사)" ${valStatus==='장기배양(심사)'?'selected':''}>장기배양(심사)</option>
-                                        <option value="거절" ${valStatus==='거절'?'selected':''}>거절</option>
-                                    </select>
-                                </div>
-                                
-                                <div class="w-[3%] shrink-0">
-                                    <input type="text" id="cnt_${index}" value="${valCount}" readonly placeholder="건수" onclick="if(document.getElementById('status_${index}').value==='계약') openContractModal(${index}, '')" class="w-full px-1.5 py-1.5 border border-emerald-300 rounded bg-emerald-50 text-xs font-black text-emerald-700 text-center focus:outline-none cursor-pointer placeholder-emerald-300 transition hover:bg-emerald-100">
-                                </div>
-                                <div class="w-[8%] shrink-0">
-                                    <input type="text" id="prm_${index}" value="${valPremium}" readonly placeholder="보험료" onclick="if(document.getElementById('status_${index}').value==='계약') openContractModal(${index}, '')" class="w-full px-2 py-1.5 border border-emerald-300 rounded bg-emerald-50 text-xs font-black text-emerald-700 text-right focus:outline-none cursor-pointer placeholder-emerald-300 transition hover:bg-emerald-100">
-                                </div>
-
-                                <div class="w-[26%] shrink-0">
-                                    <input type="text" id="note_${index}" value="${valNote}" onchange="markModified(${index})" placeholder="비고 입력" class="w-full px-2 py-1.5 border border-slate-300 rounded focus:border-blue-500 focus:outline-none text-xs">
+                                <div class="w-[50%]">
+                                    <input type="text" id="note_${index}" value="${valNote}" onchange="markModified(${index})" placeholder="비고 (상담 메모 입력)" class="w-full p-2 border border-slate-300 rounded-lg text-xs bg-white focus:border-blue-600 focus:outline-none">
                                 </div>
                             </div>
                         </td>
                     </tr>
                 `;
 
-                // ==========================================
-                // 📱 2. 모바일 뷰
-                // ==========================================
+                // 2. 모바일 뷰
                 mobileHtml += `
-                    <div class="bg-white rounded-xl shadow-md border border-slate-200 overflow-hidden relative mb-4">
+                    <div id="m_edit_area_${index}" class="bg-white rounded-xl border border-slate-200 p-4 mb-3 shadow-sm">
                         <input type="hidden" id="m_custName_${index}" value="${db.customerName}">
-                        <div id="m_edit_area_${index}" class="p-4 transition-all bg-white">
-                            
-                            <!-- 1. 상단: 이름 및 기한 -->
-                            <div class="flex justify-between items-center mb-3 border-b border-slate-100 pb-3">
-                                <div class="flex items-center gap-2">
-                                    <span class="bg-slate-800 text-white text-[10px] px-2 py-0.5 rounded font-bold">No.${index + 1}</span>
-                                    <span class="font-black text-base text-slate-900">${db.customerName || '-'}</span>
-                                </div>
-                                <span class="text-rose-600 font-black text-xs bg-rose-50 px-2 py-1 rounded border border-rose-100">${db.timeLimit || '-'}</span>
+                        <div class="flex justify-between items-center pb-2.5 mb-2.5 border-b border-slate-100">
+                            <div>
+                                <span class="text-xs font-bold text-slate-400 mr-1">#${index + 1}</span>
+                                <span class="font-black text-base text-slate-900">${db.customerName || '-'}</span>
+                                <span class="ml-1 text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded font-bold">${db.region || '-'}</span>
                             </div>
-
-                            <!-- ⭐️ 새로 추가된 고객 상세 정보 영역 시작 -->
-                            <div class="mb-3 bg-slate-50 p-3 rounded-lg border border-slate-200 text-xs">
-                                <div class="grid grid-cols-2 gap-y-2 gap-x-4">
-                                    <!-- 연락처 (터치 시 전화연결) -->
-                                    <div class="flex flex-col gap-0.5">
-                                        <span class="text-[10px] text-slate-400 font-bold">📞 연락처</span>
-                                        <a href="tel:${db.phone}" class="font-bold text-blue-600 text-[13px] hover:underline">${db.phone || '-'}</a>
-                                    </div>
-                                    <!-- 인적사항 -->
-                                    <div class="flex flex-col gap-0.5">
-                                        <span class="text-[10px] text-slate-400 font-bold">👤 인적사항</span>
-                                        <span class="font-bold text-slate-700 text-[13px]">${db.birth || '-'} / ${db.gender || '-'}</span>
-                                    </div>
-                                </div>
-                                <!-- 지역 -->
-                                <div class="mt-2 pt-2 border-t border-slate-200 flex flex-col gap-0.5">
-                                    <span class="text-[10px] text-slate-400 font-bold">📍 지역</span>
-                                    <span class="font-bold text-slate-700 text-[13px]">
-                                        <span class="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded mr-1 text-[10px]">${db.region || '-'}</span>
-                                        ${db.sido || ''} ${db.gugun || ''} ${db.dong || ''}
-                                    </span>
+                            <span class="text-rose-600 font-bold text-xs">${db.timeLimit || '-'}</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-xs mb-3 bg-slate-50 p-2.5 rounded-lg">
+                            <div><span class="text-slate-400 block text-[10px]">연락처</span><a href="tel:${db.phone}" class="font-bold text-blue-600 underline">${db.phone || '-'}</a></div>
+                            <div><span class="text-slate-400 block text-[10px]">생년월일/성별</span><span class="font-bold">${db.birth || '-'} / ${db.gender || '-'}</span></div>
+                            <div class="col-span-2"><span class="text-slate-400 block text-[10px]">주소</span><span class="font-bold">${db.sido || ''} ${db.gugun || ''} ${db.dong || ''}</span></div>
+                            <div class="col-span-2"><span class="text-slate-400 block text-[10px]">메모</span><span>${db.memo || '-'}</span></div>
+                        </div>
+                        <div class="space-y-2">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-bold text-slate-700 shrink-0">🎧 녹취</span>
+                                <div class="flex-grow relative overflow-hidden h-10 rounded border border-slate-300 bg-[#141414]">
+                                    ${db.audioUrl ? `<iframe src="${db.audioUrl.replace('uc?export=download&id=', 'file/d/')}/preview" style="position: absolute; top: -20px; left: 0; width: 100%; height: 150px; border: none;" allow="autoplay"></iframe><div class="absolute top-0 right-0 w-[45px] h-full bg-[#141414] z-10"></div>` : `<div class="w-full h-full flex items-center justify-center bg-slate-100 text-[11px] text-slate-400">녹취 없음</div>`}
                                 </div>
                             </div>
-                            <!-- ⭐️ 고객 상세 정보 영역 끝 -->
-
-                            <!-- 2. 메모 영역 -->
-                            <div class="text-xs text-slate-600 mb-4 bg-slate-50 p-2 rounded border border-slate-100 leading-snug">
-                                <span class="font-bold text-slate-500 block mb-1">📝 메모</span>${db.memo || '-'}
-                            </div>
-
-                            <!-- 3. 하단 액션 영역 (녹취, TA, 일정, 상태 등) -->
-                            <div class="space-y-2 bg-amber-50/50 p-3 rounded-lg border border-amber-100">
-                                
-                           <!-- ⭐️ 수정됨: 가로를 100%로 펴서 시간을 확보하고, 우측 끝에 검은색 가림막(w-[45px])을 덮어 새창버튼만 지움 -->
-                                <div class="w-full flex items-center gap-2 mb-1">
-                                    <span class="text-xs font-bold text-slate-700 whitespace-nowrap shrink-0">🎧 녹취</span>
-                                    <div class="flex-grow w-full relative overflow-hidden h-10 rounded border border-slate-300 shadow-sm bg-[#141414]">
-                                        ${db.audioUrl ? `<iframe src="${db.audioUrl.replace('uc?export=download&id=', 'file/d/')}/preview" style="position: absolute; top: -20px; left: 0; width: 100%; height: 150px; border: none;" allow="autoplay"></iframe><div class="absolute top-0 right-0 w-[45px] h-full bg-[#141414] z-10"></div>` : `<div class="w-full h-full flex items-center justify-center bg-slate-100 text-[10px] text-slate-400 font-bold">녹취 없음</div>`}
-                                    </div>
-                                </div>
-
-                                <div class="grid grid-cols-2 gap-2">
-                                    ${generateTaSelect(`m_ta1_${index}`, '1차 TA(1일)', valTa1, index, 'm_')}
-                                    ${generateTaSelect(`m_ta2_${index}`, '2차 TA(2일)', valTa2, index, 'm_')}
-                                    ${generateTaSelect(`m_ta3_${index}`, '3차 TA(3일)', valTa3, index, 'm_')}
-                                    ${generateTaSelect(`m_ta4_${index}`, '4차 이상 TA', valTa4, index, 'm_')}
-                                </div>
-
-                                <div class="flex gap-2 pt-1">
-                                    <div class="w-[50%] flex gap-1">
-                                        <input type="text" id="m_schedule_${index}" value="${valSchedule}" readonly onclick="openScheduleModal(${index}, 'm_')" placeholder="일정입력(터치)" class="w-full px-2 py-1.5 border border-slate-300 rounded focus:border-blue-500 focus:outline-none text-xs cursor-pointer hover:bg-blue-50 transition font-bold text-blue-700 bg-white">
-                                    </div>
-                                    <div class="w-[50%]">
-                                        <select id="m_status_${index}" onchange="handleStatusChange(${index}, 'm_')" class="w-full p-1.5 border border-slate-300 rounded focus:border-blue-500 focus:outline-none text-xs font-bold text-slate-700 bg-white">
-                                            <option value="" ${valStatus===''?'selected':''}>- 현황 -</option>
-                                            <option value="상담 중" ${valStatus==='상담 중'?'selected':''}>상담 중</option>
-                                            <option value="상담완료" ${valStatus==='상담완료'?'selected':''}>상담완료</option>
-                                            <option value="계약" ${valStatus==='계약'?'selected':''}>계약</option>
-                                            <option value="장기배양(심사)" ${valStatus==='장기배양(심사)'?'selected':''}>장기배양(심사)</option>
-                                            <option value="거절" ${valStatus==='거절'?'selected':''}>거절</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div class="flex gap-2 pt-1">
-                                    <input type="text" id="m_cnt_${index}" value="${valCount}" readonly placeholder="건수" onclick="if(document.getElementById('m_status_${index}').value==='계약') openContractModal(${index}, 'm_')" class="w-[30%] px-2 py-2 border border-emerald-300 rounded bg-emerald-50 text-xs font-black text-emerald-700 focus:outline-none cursor-pointer text-center">
-                                    <input type="text" id="m_prm_${index}" value="${valPremium}" readonly placeholder="보험료 입력 (터치)" onclick="if(document.getElementById('m_status_${index}').value==='계약') openContractModal(${index}, 'm_')" class="w-[70%] px-2 py-2 border border-emerald-300 rounded bg-emerald-50 text-xs font-black text-emerald-700 focus:outline-none cursor-pointer text-right">
-                                </div>
-
-                                <div class="pt-1">
-                                    <input type="text" id="m_note_${index}" value="${valNote}" onchange="markModified(${index})" placeholder="비고(특이사항) 입력" class="w-full px-2 py-1.5 border border-slate-300 rounded focus:border-blue-500 focus:outline-none text-xs">
-                                </div>
-                            </div>
+                            ${generateStatusSelect(`m_status_${index}`, valStatus, index)}
+                            <input type="text" id="m_note_${index}" value="${valNote}" onchange="markModified(${index})" placeholder="비고 (상담 메모 입력)" class="w-full p-2 border border-slate-300 rounded-lg text-xs bg-white">
                         </div>
                     </div>
                 `;
             });
 
             container.innerHTML = `
-                <div class="hidden xl:block bg-white rounded-xl shadow-md border border-slate-200 overflow-hidden min-w-[1400px]">
+                <div class="hidden xl:block bg-white rounded-xl border border-slate-200 overflow-hidden">
                     <table class="w-full text-xs text-center border-collapse whitespace-nowrap">
-                        <thead class="bg-slate-800 text-white">
+                        <thead class="bg-slate-100 text-slate-800 border-b border-slate-200 font-bold">
                             <tr>
-                                <th class="p-2 border-r border-slate-700 font-medium w-10">No.</th>
-                                <th class="p-2 border-r border-slate-700 font-medium">배분날짜</th>
-                                <th class="p-2 border-r border-slate-700 font-medium">전화번호</th>
-                                <th class="p-2 border-r border-slate-700 font-medium">지역</th>
-                                <th class="p-2 border-r border-slate-700 font-medium text-amber-300">고객명</th>
-                                <th class="p-2 border-r border-slate-700 font-medium">시도</th>
-                                <th class="p-2 border-r border-slate-700 font-medium">구군</th>
-                                <th class="p-2 border-r border-slate-700 font-medium">읍면동</th>
-                                <th class="p-2 border-r border-slate-700 font-medium">생년월일</th>
-                                <th class="p-2 border-r border-slate-700 font-medium">성별</th>
-                                <th class="p-2 border-r border-slate-700 font-medium whitespace-normal w-40">메모</th>
-                                <th class="p-2 border-r border-slate-700 font-medium">담당설계사</th>
-                                <th class="p-2 border-r border-slate-700 font-medium text-emerald-300">진행상태</th>
-                                <th class="p-2 border-r border-slate-700 font-medium">배정일시</th>
-                                <th class="p-2 font-medium text-rose-300">유효기간</th>
+                                <th class="p-2.5 border-r border-slate-200 w-12">No.</th>
+                                <th class="p-2.5 border-r border-slate-200">배분날짜</th>
+                                <th class="p-2.5 border-r border-slate-200">전화번호</th>
+                                <th class="p-2.5 border-r border-slate-200">지역</th>
+                                <th class="p-2.5 border-r border-slate-200">고객명</th>
+                                <th class="p-2.5 border-r border-slate-200">상세주소</th>
+                                <th class="p-2.5 border-r border-slate-200">생년월일/성별</th>
+                                <th class="p-2.5 border-r border-slate-200 w-64">메모</th>
+                                <th class="p-2.5 border-r border-slate-200">배정일시</th>
+                                <th class="p-2.5">유효기간</th>
                             </tr>
                         </thead>
-                        <tbody class="text-slate-700">
-                            ${desktopHtml}
-                        </tbody>
+                        <tbody>${desktopHtml}</tbody>
                     </table>
                 </div>
-                <div class="block xl:hidden flex flex-col gap-4">
-                    ${mobileHtml}
-                </div>
+                <div class="block xl:hidden">${mobileHtml}</div>
             `;
-        }
-
-        // ==========================================
-        // 📅 ⭐️ 신규: 스케줄 모달 제어 함수들
-        // ==========================================
-        function openScheduleModal(index, prefix) {
-            currentSchIndex = index;
-            currentSchPrefix = prefix;
-            
-            const schInput = document.getElementById(`${prefix}schedule_${index}`);
-            const existVal = schInput.value;
-            
-            // 기존 텍스트가 있다면 분리해서 모달 창에 세팅
-            document.getElementById('schType').value = schInput.getAttribute('data-sch-type') || "";
-            document.getElementById('schDateTime').value = schInput.getAttribute('data-raw-time') || "";
-            
-            if (schInput.getAttribute('data-sch-loc')) {
-                document.getElementById('schLocation').value = schInput.getAttribute('data-sch-loc');
-            } else {
-                document.getElementById('schLocation').value = existVal.includes(' / ') ? '' : existVal;
-            }
-            
-            document.getElementById('scheduleInputModal').classList.remove('hidden');
-        }
-
-        function closeScheduleModal() {
-            document.getElementById('scheduleInputModal').classList.add('hidden');
-        }
-
-        function clearScheduleInput() {
-            if(confirm('입력된 스케줄을 초기화하시겠습니까?')) {
-                const schInput = document.getElementById(`${currentSchPrefix}schedule_${currentSchIndex}`);
-                schInput.value = "";
-                schInput.removeAttribute('data-raw-time');
-                schInput.removeAttribute('data-sch-type');
-                schInput.removeAttribute('data-sch-loc');
-                schInput.removeAttribute('data-sync-calendar');
-                markModified(currentSchIndex);
-                closeScheduleModal();
-            }
-        }
-
-        function confirmScheduleModal() {
-            const sType = document.getElementById('schType').value;
-            const sTimeRaw = document.getElementById('schDateTime').value; // YYYY-MM-DDThh:mm
-            const sLoc = document.getElementById('schLocation').value.trim();
-
-            let resultText = "";
-            let formattedTime = "";
-            
-            if (sType || sTimeRaw || sLoc) {
-                if (sTimeRaw) {
-                    const dt = new Date(sTimeRaw);
-                    const mm = String(dt.getMonth() + 1).padStart(2, '0');
-                    const dd = String(dt.getDate()).padStart(2, '0');
-                    const hh = String(dt.getHours()).padStart(2, '0');
-                    const mns = String(dt.getMinutes()).padStart(2, '0');
-                    formattedTime = `${mm}/${dd} ${hh}:${mns}`;
-                }
-
-                const parts = [];
-                if (sType) parts.push(sType);
-                if (formattedTime) parts.push(formattedTime);
-                if (sLoc) parts.push(sLoc);
-
-                resultText = parts.join(" / ");
-            }
-
-            const schInput = document.getElementById(`${currentSchPrefix}schedule_${currentSchIndex}`);
-            schInput.value = resultText;
-            
-            // ⭐️ 앱스크립트로 넘겨주기 위해 원본 데이터(Raw Data)를 요소 속성으로 저장
-            schInput.setAttribute('data-raw-time', sTimeRaw);
-            schInput.setAttribute('data-sch-type', sType);
-            schInput.setAttribute('data-sch-loc', sLoc);
-            // ⭐️ 캘린더 동기화 신호(true) 부여
-            schInput.setAttribute('data-sync-calendar', 'true');
-            
-            markModified(currentSchIndex);
-            closeScheduleModal();
-        }
-
-        // ==========================================
-        // (기존 함수들 동일하게 유지)
-        // ==========================================
-        function generateTaSelect(id, label, selectedValue, index, prefix) {
-            const val = selectedValue || '';
-            const colorClass = val === '' ? 'text-slate-500' : 'text-slate-800';
-            return `
-            <select id="${id}" onchange="markModified(${index})" class="w-full p-1.5 border border-slate-300 rounded focus:border-blue-500 focus:outline-none text-xs font-bold ${colorClass} bg-white">
-                <option value="" ${val===''?'selected':''}>- ${label} -</option>
-                <option value="부재" ${val==='부재'?'selected':''}>부재</option>
-                <option value="다시" ${val==='다시'?'selected':''}>다시</option>
-                <option value="거절" ${val==='거절'?'selected':''}>거절</option>
-                <option value="예정" ${val==='예정'?'selected':''}>예정</option>
-                <option value="본인설계사" ${val==='본인설계사'?'selected':''}>본인설계사</option>
-            </select>
-            `;
-        }
-
-        function handleStatusChange(index, prefix) {
-            markModified(index);
-            const statusVal = document.getElementById(`${prefix}status_${index}`).value;
-            
-            if (statusVal === '계약') {
-                openContractModal(index, prefix);
-            } else {
-                document.getElementById(`${prefix}cnt_${index}`).value = ""; 
-                document.getElementById(`${prefix}prm_${index}`).value = ""; 
-            }
-        }
-
-        function openContractModal(index, prefix) {
-            currentModalIndex = index;
-            currentModalPrefix = prefix;
-            const container = document.getElementById('contractRowsContainer');
-            container.innerHTML = ""; 
-            addContractRow(); addContractRow(); addContractRow();
-            document.getElementById('contractModal').classList.remove('hidden');
-        }
-
-        function closeContractModal() {
-            document.getElementById('contractModal').classList.add('hidden');
-        }
-
-        function formatPremiumInput(input) {
-            let val = input.value.replace(/[^0-9]/g, '');
-            if(val === '') {
-                input.value = '';
-            } else {
-                input.value = Number(val).toLocaleString();
-            }
-        }
-
-        function addContractRow() {
-            const container = document.getElementById('contractRowsContainer');
-            const rowDiv = document.createElement('div');
-            rowDiv.className = "flex gap-2 mb-2 contract-item";
-            rowDiv.innerHTML = `
-                <select class="w-[45%] p-2 border border-slate-300 rounded font-bold text-sm text-slate-700 bg-white focus:outline-none focus:border-blue-500">
-                    <option value="">- 상품 분류 -</option>
-                    <option value="운전자">운전자</option>
-                    <option value="장기(건강)">장기(건강)</option>
-                    <option value="연금">연금</option>
-                    <option value="종신(단기납)">종신(단기납포함)</option>
-                    <option value="일반">일반</option>
-                </select>
-                <div class="w-[55%] relative">
-                    <input type="text" placeholder="보험료 입력" oninput="formatPremiumInput(this)" class="contract-premium w-full p-2 border border-slate-300 rounded font-bold text-sm text-slate-700 text-right pr-6 focus:outline-none focus:border-blue-500">
-                    <span class="absolute right-2 top-2.5 text-xs font-bold text-slate-400">원</span>
-                </div>
-            `;
-            container.appendChild(rowDiv);
-        }
-
-        function removeContractRow() {
-            const container = document.getElementById('contractRowsContainer');
-            if (container.children.length > 1) {
-                container.removeChild(container.lastChild);
-            } else {
-                alert('최소 1개의 입력란은 필요합니다.');
-            }
-        }
-
-        function confirmContractModal() {
-            const rows = document.querySelectorAll('.contract-item');
-            let totalCount = 0; let totalPremium = 0;
-
-            rows.forEach(row => {
-                const category = row.querySelector('select').value;
-                const premiumFormatted = row.querySelector('.contract-premium').value;
-                const premiumRaw = premiumFormatted.replace(/,/g, ''); 
-                
-                if (category && premiumRaw && !isNaN(premiumRaw)) {
-                    totalCount++; totalPremium += parseInt(premiumRaw, 10);
-                }
-            });
-
-            if (totalCount === 0) {
-                alert("입력된 상품 정보가 없습니다. 취소하시려면 '취소' 버튼을 눌러주세요."); return;
-            }
-
-            document.getElementById(`${currentModalPrefix}cnt_${currentModalIndex}`).value = totalCount + "건";
-            document.getElementById(`${currentModalPrefix}prm_${currentModalIndex}`).value = totalPremium.toLocaleString() + "원";
-            
-            markModified(currentModalIndex);
-            closeContractModal();
         }
 
         function markModified(index) {
             modifiedRows.add(index);
-            const rowDivD = document.getElementById(`edit_area_${index}`);
-            if(rowDivD) {
-                rowDivD.classList.remove('bg-amber-50');
-                rowDivD.classList.add('bg-blue-50', 'ring-2', 'ring-inset', 'ring-blue-400');
-            }
-            const rowDivM = document.getElementById(`m_edit_area_${index}`);
-            if(rowDivM) {
-                rowDivM.classList.remove('bg-white');
-                rowDivM.classList.add('bg-blue-50', 'ring-2', 'ring-inset', 'ring-blue-400');
-            }
+            const dEl = document.getElementById(`edit_area_${index}`);
+            if (dEl) dEl.classList.add('bg-blue-50', 'ring-1', 'ring-blue-400');
+            const mEl = document.getElementById(`m_edit_area_${index}`);
+            if (mEl) mEl.classList.add('ring-2', 'ring-blue-500');
         }
 
         async function saveAllChanges() {
-            if (modifiedRows.size === 0) { alert("수정된 항목이 없습니다."); return; }
-
+            if (modifiedRows.size === 0) { alert("변경된 내용이 없습니다."); return; }
             const btn = document.getElementById('globalSaveBtn');
-            const textSpan = document.getElementById('globalSaveText');
-            btn.disabled = true; btn.classList.replace('bg-blue-600', 'bg-slate-500');
+            const txt = document.getElementById('globalSaveText');
+            btn.disabled = true;
 
-            const isMobileView = window.innerWidth < 1280;
-            const pfx = isMobileView ? 'm_' : '';
-
-            let successCount = 0; let failCount = 0;
-            const total = modifiedRows.size; const indexes = Array.from(modifiedRows);
+            const isMobile = window.innerWidth < 1280;
+            const pfx = isMobile ? 'm_' : '';
+            const indexes = Array.from(modifiedRows);
 
             for (let i = 0; i < indexes.length; i++) {
                 const idx = indexes[i];
-                textSpan.innerText = `⏳ 저장 및 동기화 중... (${i+1}/${total})`;
-
-                let rawCount = document.getElementById(`${pfx}cnt_${idx}`).value.replace(/[^0-9]/g, '');
-                let rawPremium = document.getElementById(`${pfx}prm_${idx}`).value.replace(/[^0-9]/g, '');
-                
-                const schInput = document.getElementById(`${pfx}schedule_${idx}`);
-                const scheduleVal = schInput.value.trim();
-
+                txt.innerText = `저장 중... (${i + 1}/${indexes.length})`;
                 const payload = {
                     action: "updateHyunhwang",
                     agentName: currentAgent,
                     customerName: document.getElementById(`${pfx}custName_${idx}`).value,
-                    ta1: document.getElementById(`${pfx}ta1_${idx}`).value,
-                    ta2: document.getElementById(`${pfx}ta2_${idx}`).value,
-                    ta3: document.getElementById(`${pfx}ta3_${idx}`).value,
-                    ta4: document.getElementById(`${pfx}ta4_${idx}`).value,
-                    schedule: scheduleVal, 
-                    // ⭐️ 신규: 프론트에서 생성된 동기화 데이터를 모두 전송
-                    rawSchTime: schInput.getAttribute('data-raw-time'),
-                    schType: schInput.getAttribute('data-sch-type'),
-                    schLoc: schInput.getAttribute('data-sch-loc'),
-                    syncCalendar: schInput.getAttribute('data-sync-calendar') === 'true', 
                     status: document.getElementById(`${pfx}status_${idx}`).value,
-                    contractCount: rawCount,
-                    contractPremium: rawPremium,
                     note: document.getElementById(`${pfx}note_${idx}`).value
                 };
-
                 try {
-                    const response = await fetch(GAS_WEBAPP_URL, {
-                        method: 'POST', body: JSON.stringify(payload)
-                    });
-                    const result = await response.json();
-                    if(result.success) {
-                        successCount++;
-                        // ⭐️ 캘린더 실패 시 알림창 띄우기
-                        if (result.calResult && !result.calResult.success) {
-                            alert(`🚨 캘린더 연동 실패! (고객명: ${payload.customerName})\n사유: ${result.calResult.error}`);
-                        }
-                    }
-                } catch (error) {
-                    failCount++;
-                }
+                    await fetch(GAS_WEBAPP_URL, { method: 'POST', body: JSON.stringify(payload) });
+                } catch (e) {}
             }
 
-            alert(`총 ${total}건 저장 및 동기화 완료!` + (failCount > 0 ? `\n(실패: ${failCount}건)` : ""));
-            btn.disabled = false; btn.classList.replace('bg-slate-500', 'bg-blue-600');
-            textSpan.innerText = "💾 전체 저장";
-            
-            loadAssignedDBs(); 
+            alert("저장이 완료되었습니다.");
+            btn.disabled = false;
+            txt.innerText = "💾 변경사항 저장";
+            loadAssignedDBs();
         }
+
+        // 보안 스크립트 유지
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.addEventListener('selectstart', e => e.preventDefault());
+        window.addEventListener('blur', () => {
+            if (document.activeElement && document.activeElement.tagName === 'IFRAME') return;
+            document.body.classList.add('capture-protect-mode');
+        });
+        window.addEventListener('focus', () => document.body.classList.remove('capture-protect-mode'));
     </script>
-    <!-- 🛡️ 보안: 캡처 방지, 우클릭, 드래그, 소스보기(F12) 원천 차단 스크립트 -->
-<style>
-    /* 모바일 꾹 누르기(팝업) 및 텍스트 드래그 원천 차단 */
-    body {
-        -webkit-user-select: none;
-        -moz-user-select: none;
-        -ms-user-select: none;
-        user-select: none;
-        -webkit-touch-callout: none;
-    }
-    
-    /* 캡처 도구 실행 시 화면 가림막(Blur) 적용 클래스 */
-    .capture-protect-mode {
-        filter: blur(15px) !important;
-        opacity: 0.1 !important;
-        pointer-events: none !important;
-    }
-</style>
-<script>
-    // 1. 마우스 우클릭 금지
-    document.addEventListener('contextmenu', function(e) {
-        e.preventDefault();
-    });
-
-    // 2. 마우스 드래그(블록 지정) 및 이미지 드래그 금지
-    document.addEventListener('selectstart', function(e) { e.preventDefault(); });
-    window.addEventListener('dragstart', function(e) { e.preventDefault(); });
-
-    // 3. 캡처 프로그램 실행 시 화면 포커스를 잃으면 즉시 화면 가림
-    window.addEventListener('blur', function() {
-        document.body.classList.add('capture-protect-mode');
-    });
-
-    // 4. 화면으로 다시 돌아오면 가림막 해제
-    window.addEventListener('focus', function() {
-        document.body.classList.remove('capture-protect-mode');
-    });
-
-    // 5. 복사, 잘라내기 원천 차단 및 클립보드 강제 초기화
-    window.addEventListener('copy', function(e) { 
-        e.preventDefault(); 
-        try { navigator.clipboard.writeText(''); } catch(err) {} 
-    });
-    window.addEventListener('cut', function(e) { e.preventDefault(); });
-
-    // 6. 키보드 단축키 (F12, 소스보기, 복사, 캡처 등) 금지
-    document.addEventListener('keydown', function(e) {
-        // F12 개발자 도구 차단
-        if (e.key === 'F12') {
-            e.preventDefault();
-        }
-        // Ctrl + Shift + I (개발자 도구 단축키) 차단
-        if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i')) {
-            e.preventDefault();
-        }
-        // Ctrl + U (페이지 소스 보기) 차단
-        if (e.ctrlKey && (e.key === 'U' || e.key === 'u')) {
-            e.preventDefault();
-        }
-        // Ctrl + C (복사), Ctrl + P (인쇄) 차단 및 클립보드 비우기
-        if (e.ctrlKey && (e.key === 'C' || e.key === 'c' || e.key === 'P' || e.key === 'p')) {
-            e.preventDefault();
-            try { navigator.clipboard.writeText(''); } catch(err) {} 
-        }
-        // PrintScreen, Alt+Shift+S, Win+Shift+S, Cmd+Shift+S 등 캡처 단축키 차단
-        if (
-            e.key === 'PrintScreen' || 
-            e.keyCode === 44 || 
-            (e.altKey && e.shiftKey && (e.key === 's' || e.key === 'S')) || 
-            (e.metaKey && e.shiftKey && (e.key === 's' || e.key === 'S'))
-        ) {
-            e.preventDefault();
-            try { navigator.clipboard.writeText(''); } catch(err) {} // 클립보드 강제 초기화
-            alert('고객 정보 보호를 위해 화면 캡처 및 복사가 금지되어 있습니다.');
-        }
-    });
-</script>
 </body>
 </html>
