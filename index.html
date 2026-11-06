@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>데이텀 (DATUM) - 해송홀딩스 DB 자동배분 시스템</title>
+    <title>데이텀 (DATUM)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
@@ -16,14 +16,13 @@
 </head>
 <body class="min-h-screen flex flex-col bg-slate-50 text-slate-800 pb-16 md:pb-0">
 
-    <!-- ⭐️ [유사업체 벤치마킹 별도엔진 1] 실시간 DB 배분 & 녹취 매칭 롤링 티커 -->
     <div class="bg-slate-950 text-white text-xs py-2 px-4 border-b border-slate-800">
         <div class="max-w-7xl mx-auto flex items-center justify-between">
             <div class="flex items-center space-x-2.5 truncate">
                 <span class="bg-emerald-500 text-slate-950 px-2 py-0.5 rounded font-black text-[10px] tracking-wider uppercase animate-pulse">LIVE 배분현황</span>
-                <span id="liveTickerText" class="text-slate-200 font-medium truncate">[경기남부1] 김*훈 팀장님 보장분석 DB 5건 (녹취포함) 자동배정 및 알리고 발송 완료</span>
+                <span id="liveTickerText" class="text-slate-200 font-medium truncate">[경기남부1] 김** 팀장님 보장분석 DB 5건 (녹취포함) 자동배정 및 알리고 발송 완료</span>
             </div>
-            <span class="hidden md:inline text-slate-400 font-semibold text-[11px]">운영법인: 해송홀딩스 | Google Drive 녹취 자동매칭 시스템</span>
+            <span class="hidden md:inline text-slate-400 font-semibold text-[11px]">해송홀딩스 | Google Drive 녹취 자동매칭 시스템</span>
         </div>
     </div>
 
@@ -37,7 +36,7 @@
                         <div class="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center font-black text-xl text-white shadow-md group-hover:bg-blue-500 transition">D</div>
                         <div>
                             <span class="font-black text-2xl tracking-tighter text-white block leading-none">DATUM</span>
-                            <span class="text-[10px] text-blue-400 font-bold tracking-widest block mt-0.5">해송홀딩스 DB자동배분</span>
+                            <span class="text-[10px] text-blue-400 font-bold tracking-widest block mt-0.5">DB배정</span>
                         </div>
                     </button>
                 </div>
@@ -50,7 +49,7 @@
                     </button>
                     <button id="navOrder" onclick="switchView('order')" class="hover:text-white transition">🛒 DB구매신청</button>
                     <button onclick="checkAuthAndOpen('contractDashboardModal')" class="hover:text-white transition text-slate-400">📊 계약현황 대시보드</button>
-                    <button onclick="openModal('contactModal')" class="hover:text-white transition text-slate-400">불량DB(A/S)·문의</button>
+                    <button onclick="openModal('contactModal')" class="hover:text-white transition text-slate-400">DB(A/S)·문의</button>
                 </nav>
 
                 <!-- 우측 사용자 프로필 (잇츠리온 인증 UI 100% 호환) -->
@@ -86,7 +85,7 @@
                 <div class="max-w-7xl mx-auto">
                     <div class="text-center max-w-3xl mx-auto mb-10">
                         <span class="inline-block bg-blue-500/20 text-blue-300 border border-blue-400/30 text-xs font-extrabold px-3.5 py-1 rounded-full mb-3">
-                            해송홀딩스 공식 DB 자동배분 플랫폼 · 데이텀(DATUM)
+                            데이텀(DATUM) DB 플랫폼
                         </span>
                         <h1 class="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight leading-tight">
                             녹취파일 자동재생부터 알리고 알림까지<br/>
@@ -136,7 +135,7 @@
                                 <span class="text-xs font-extrabold text-amber-400 tracking-wider uppercase">CORE ENGINE 02</span>
                                 <h2 class="text-2xl sm:text-3xl font-black text-white mt-1">DB 구매신청</h2>
                                 <p class="text-xs sm:text-sm text-slate-300 mt-2.5 leading-relaxed">
-                                    원하시는 <b>희망 지역(서울/인천/경기북부/경기남부/충청/부산/경남/대구/경북)</b>과 배정 요일(평일/주말/무관), 수량을 선택하여 즉시 배분을 신청합니다.
+                                    원하시는 <b>희망 지역(서울/인천/경기북부/경기남부/충청/부산/경남/대구/경북)</b>과 배정 수량을 선택하여 즉시 배분을 신청합니다.
                                 </p>
                             </div>
                             <div class="mt-7 pt-4 border-t border-slate-700 flex items-center justify-between">
@@ -151,12 +150,12 @@
                 </div>
             </section>
 
-            <!-- 잇츠리온 연동 보조 업무 도구 & 데이텀 프로세스 안내 -->
+            <!-- 데이텀 프로세스 안내 -->
             <section class="py-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="mb-6 flex items-center justify-between">
                     <div>
-                        <h3 class="text-lg sm:text-xl font-black text-slate-900">⚡ 데이텀(DATUM) 자동배분 시스템 및 스마트 영업 도구</h3>
-                        <p class="text-xs text-slate-500 mt-0.5">기존 잇츠리온의 검증된 전산 도구와 100% 동일하게 연동됩니다.</p>
+                        <h3 class="text-lg sm:text-xl font-black text-slate-900">⚡ 데이텀(DATUM) DB플랫폼</h3>
+                        <p class="text-xs text-slate-500 mt-0.5"></p>
                     </div>
                 </div>
 
@@ -178,14 +177,14 @@
                     </div>
                     <div onclick="openModal('contactModal')" class="bg-white hover:bg-rose-50/50 p-5 rounded-2xl border border-slate-200 hover:border-rose-500 cursor-pointer transition text-center shadow-sm">
                         <div class="text-3xl mb-2">🔄</div>
-                        <div class="font-bold text-sm text-slate-900">불량DB 교환 / 문의</div>
+                        <div class="font-bold text-sm text-slate-900">DB A/S신청</div>
                         <div class="text-[11px] text-slate-500 mt-1">거절·본인설계사 즉시회수</div>
                     </div>
                 </div>
             </section>
         </div>
 
-        <!-- ==================== [뷰 2: DB 구매신청 전용 엔진 화면 (유사업체 벤치마킹 + 잇츠리온 14개 권역 완벽 연동)] ==================== -->
+        <!-- ==================== [뷰 2: DB 구매신청 전용 엔진 화면 ] ==================== -->
         <div id="viewOrder" class="hidden py-10 px-4">
             <div class="max-w-4xl mx-auto">
                 <div class="flex items-center justify-between mb-6">
@@ -212,7 +211,7 @@
                             </div>
                         </div>
 
-                        <!-- 2. DB 상품 선택 (커넥트앤/정심에셋/모홈 벤치마킹) -->
+                        <!-- 2. DB 상품 선택 -->
                         <div>
                             <label class="block text-sm font-black text-slate-900 mb-2">1. DB 상품 유형 선택 <span class="text-xs font-normal text-slate-500">(모든 DB에 TM 녹취파일이 기본 포함됩니다)</span></label>
                             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -292,7 +291,7 @@
                         <!-- 5. 결제 예정 금액 안내 -->
                         <div class="bg-slate-900 text-white p-5 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                             <div>
-                                <span class="text-xs text-slate-400 block">해송홀딩스 데이텀(DATUM) 자동배분 결제 예정 금액</span>
+                                <span class="text-xs text-slate-400 block">DB 결제 예정 금액</span>
                                 <span id="orderSummaryText" class="text-sm font-bold text-amber-400">보장분석 퍼미션 DB × 10건</span>
                             </div>
                             <div class="text-right w-full sm:w-auto">
@@ -326,19 +325,19 @@
         </button>
     </div>
 
-    <!-- 하단 푸터 (운영법인: 해송홀딩스 명시) -->
+    <!-- 운영법인: 해송홀딩스 명시 -->
     <footer class="bg-slate-900 text-slate-400 text-xs py-10 border-t border-slate-800">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-3">
             <div>
-                <p class="font-black text-white text-sm tracking-tight">데이텀 (DATUM) | 운영법인: 해송홀딩스</p>
-                <p class="mt-1 text-slate-400">구글 드라이브 녹취 자동매칭 & 알리고 실시간 알림 연동 DB 자동배분 플랫폼</p>
-                <p class="mt-1 text-slate-500">대표전화 070-8633-2747 | 이메일 bl0ckrussian@gmail.com</p>
+                <p class="font-black text-white text-sm tracking-tight">데이텀 (DATUM) | (주)해송홀딩스</p>
+                <p class="mt-1 text-slate-400">마켓팅 플랫폼</p>
+                <p class="mt-1 text-slate-500">대표전화 000-0000-0000 | 이메일 eruda1979@gmail.com</p>
                 <p class="mt-0.5 text-slate-500">© 2026 해송홀딩스 (Haesong Holdings) & DATUM. All rights reserved.</p>
             </div>
         </div>
     </footer>
 
-    <!-- ==================== 기존 잇츠리온 모달창 (로그인, 회원가입, 비번찾기, 회원정보, 회원탈퇴, 문의하기) ==================== -->
+    <!-- ==================== (로그인, 회원가입, 비번찾기, 회원정보, 회원탈퇴, 문의하기) ==================== -->
     <!-- ※ 첨부해주신 잇츠리온 index.html의 loginModal, signupModal, findPwModal, memberInfoModal, withdrawModal, sessionWarningModal, contactModal HTML과 스크립트 함수를 그대로 포함합니다. -->
     <div id="loginModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl relative">
@@ -410,8 +409,8 @@
 
     <script>
         // ⭐️ 기존 잇츠리온 회원 인증 URL 및 DB 배정 앱스크립트 URL 그대로 사용
-        const USER_DB_URL = "https://script.google.com/macros/s/AKfycbza5DquXQvms-rDWJkcfq-iERjXnuMSJPKU-ZOH1Z_FvxFMbL5aVt3IGyzpRFL05qyP/exec";
-        const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwYWxSTVuMtFzkrlP4R0XxCvLixE2liAx3w82ySLhh4BVvAb6I4rCS0RBEOVgp7LfzF/exec";
+        const USER_DB_URL = "https://script.google.com/macros/s/AKfycbxWKYa-_UCyPxZqs4Pz3faSAzX52S0OsaxmPiU2jyi_xrn78FM-CxcSgTK7cMKSfN_xog/exec";
+        const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxM8jHtjpXz91t6X-l54CNSoPKAVMuvpoqb3_V5V71X3r7Cx8Ah3OVvyW_fWpCc3T62vg/exec";
 
         let currentUser = { isLoggedIn: false, name: '', status: '' };
 
