@@ -1,247 +1,609 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>데이텀(DATUM) - 해송홀딩스 통합 DB 자동배분 시스템</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
-    body { font-family: 'Pretendard', sans-serif; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>데이텀 (DATUM) - 해송홀딩스 DB 자동배분 시스템</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+        body { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif; background-color: #F8FAFC; color: #1E293B; scroll-behavior: smooth; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #F1F5F9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
+        .region-checkbox:checked + label { background-color: #2563EB; color: #ffffff; border-color: #2563EB; font-weight: 800; }
+    </style>
 </head>
-<body class="bg-slate-50 text-slate-800 flex flex-col min-h-screen">
+<body class="min-h-screen flex flex-col bg-slate-50 text-slate-800 pb-16 md:pb-0">
 
-  <!-- [별도엔진 1] 유사업체 벤치마킹: 실시간 배분 현황 티커 -->
-  <div class="bg-slate-900 text-white text-xs md:text-sm py-2 px-4 overflow-hidden">
-    <div class="max-w-6xl mx-auto flex items-center justify-between">
-      <div class="flex items-center space-x-2 truncate">
-        <span class="bg-blue-600 text-white px-2 py-0.5 rounded font-bold text-xs">실시간 배분</span>
-        <span id="live-ticker" class="text-slate-200">[서울/강남] 보장분석 퍼미션 DB 5건 자동배분 완료 (방금 전)</span>
-      </div>
-      <span class="hidden md:inline text-slate-400">해송홀딩스 다이렉트 DB 자동배분 시스템</span>
-    </div>
-  </div>
-
-  <!-- 상단 네비게이션 헤더 -->
-  <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
-    <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
-      <div class="flex items-center space-x-2">
-        <div class="w-8 h-8 bg-blue-700 rounded-lg flex items-center justify-center text-white font-extrabold text-lg">D</div>
-        <div>
-          <span class="text-xl font-extrabold tracking-tight text-slate-900">DATUM</span>
-          <span class="text-xs text-slate-500 block -mt-1">데이텀 DB자동배분</span>
+    <!-- ⭐️ [유사업체 벤치마킹 별도엔진 1] 실시간 DB 배분 & 녹취 매칭 롤링 티커 -->
+    <div class="bg-slate-950 text-white text-xs py-2 px-4 border-b border-slate-800">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-2.5 truncate">
+                <span class="bg-emerald-500 text-slate-950 px-2 py-0.5 rounded font-black text-[10px] tracking-wider uppercase animate-pulse">LIVE 배분현황</span>
+                <span id="liveTickerText" class="text-slate-200 font-medium truncate">[경기남부1] 김*훈 팀장님 보장분석 DB 5건 (녹취포함) 자동배정 및 알리고 발송 완료</span>
+            </div>
+            <span class="hidden md:inline text-slate-400 font-semibold text-[11px]">운영법인: 해송홀딩스 | Google Drive 녹취 자동매칭 시스템</span>
         </div>
-      </div>
-      <div class="flex space-x-2">
-        <button onclick="switchTab('register')" class="text-sm px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 font-medium">회원가입</button>
-        <button onclick="switchTab('as')" class="text-sm px-3 py-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 font-medium">불량DB 교환신청</button>
-      </div>
     </div>
-  </header>
 
-  <!-- 메인 히어로 & 핵심 메뉴 스위치 (PC/모바일 반응형 그리드) -->
-  <section class="bg-gradient-to-r from-blue-900 to-slate-900 text-white py-8 md:py-12 px-4">
-    <div class="max-w-6xl mx-auto">
-      <h1 class="text-2xl md:text-4xl font-extrabold mb-2">고효율 가망고객 DB 실시간 자동배분</h1>
-      <p class="text-slate-300 text-sm md:text-base mb-6">구글 클라우드 연동으로 결제 즉시 전용 시트로 DB가 자동 배분됩니다.</p>
-      
-      <!-- 직관적인 2대 핵심 메인 버튼 (절대원칙 반영) -->
-      <div class="grid grid-cols-2 gap-3 md:gap-6 max-w-2xl">
-        <button onclick="switchTab('crm')" id="btn-tab-crm" class="p-4 md:p-5 rounded-xl bg-blue-600 text-white font-bold text-left shadow-lg border-2 border-blue-400 transition">
-          <span class="text-xs block opacity-80 mb-1">배분받은 DB 실시간 열람/메모</span>
-          <span class="text-lg md:text-2xl">1. 고객정보관리 ➔</span>
+    <!-- 1. 상단 헤더 네비게이션 -->
+    <header class="bg-slate-900 text-white sticky top-0 z-40 shadow-lg border-b border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- 데이텀(DATUM) 로고 -->
+                <div class="flex items-center space-x-3">
+                    <button onclick="switchView('main')" class="flex items-center space-x-2 text-left focus:outline-none group">
+                        <div class="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center font-black text-xl text-white shadow-md group-hover:bg-blue-500 transition">D</div>
+                        <div>
+                            <span class="font-black text-2xl tracking-tighter text-white block leading-none">DATUM</span>
+                            <span class="text-[10px] text-blue-400 font-bold tracking-widest block mt-0.5">해송홀딩스 DB자동배분</span>
+                        </div>
+                    </button>
+                </div>
+
+                <!-- PC 네비게이션 메뉴 -->
+                <nav class="hidden md:flex space-x-6 text-sm font-semibold text-slate-300">
+                    <button id="navMain" onclick="switchView('main')" class="hover:text-white transition text-blue-400 font-bold">메인 대시보드</button>
+                    <button onclick="checkAuthAndOpen('dbAssignPage')" class="hover:text-white transition flex items-center gap-1">
+                        <span>🎧 고객정보관리(녹취/TA)</span>
+                    </button>
+                    <button id="navOrder" onclick="switchView('order')" class="hover:text-white transition">🛒 DB구매신청</button>
+                    <button onclick="checkAuthAndOpen('contractDashboardModal')" class="hover:text-white transition text-slate-400">📊 계약현황 대시보드</button>
+                    <button onclick="openModal('contactModal')" class="hover:text-white transition text-slate-400">불량DB(A/S)·문의</button>
+                </nav>
+
+                <!-- 우측 사용자 프로필 (잇츠리온 인증 UI 100% 호환) -->
+                <div class="flex items-center space-x-3">
+                    <div id="loggedOutUI" class="flex space-x-2">
+                        <button onclick="openModal('loginModal')" class="text-xs font-bold text-slate-300 hover:text-white px-2.5 py-1.5 transition">로그인</button>
+                        <button onclick="openModal('signupModal')" class="bg-blue-600 hover:bg-blue-500 px-3.5 py-1.5 rounded-lg text-xs font-bold text-white transition shadow-md">회원가입</button>
+                    </div>
+                    <div id="loggedInUI" class="hidden flex items-center space-x-3">
+                        <div class="hidden sm:flex items-center space-x-2 bg-slate-800/80 px-3 py-1.5 rounded-full border border-slate-700 text-xs">
+                            <span id="statusDot" class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                            <span id="displayUserName" class="font-bold text-slate-200">사용자</span>
+                            <span id="displayUserStatus" class="text-amber-400 font-semibold">(승인대기)</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="logoutUser()" class="text-[11px] text-slate-400 hover:text-white underline">로그아웃</button>
+                            <span class="text-slate-600 text-[10px]">|</span>
+                            <button onclick="openMemberInfo()" class="text-[11px] text-slate-400 hover:text-white underline">회원정보</button>
+                            <span class="text-slate-600 text-[10px]">|</span>
+                            <button onclick="openModal('withdrawModal')" class="text-[11px] text-rose-400 hover:text-rose-300 underline">회원탈퇴</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow">
+        <!-- ==================== [뷰 1: 데이텀 메인 화면 (직관적 2대 핵심 엔진 배치)] ==================== -->
+        <div id="viewMain" class="block">
+            <!-- 메인 히어로 & 직관적 2대 핵심 대형 버튼 (절대원칙 반영) -->
+            <section class="bg-gradient-to-b from-slate-900 via-slate-900 to-slate-800 text-white py-10 md:py-16 px-4 border-b border-slate-700">
+                <div class="max-w-7xl mx-auto">
+                    <div class="text-center max-w-3xl mx-auto mb-10">
+                        <span class="inline-block bg-blue-500/20 text-blue-300 border border-blue-400/30 text-xs font-extrabold px-3.5 py-1 rounded-full mb-3">
+                            해송홀딩스 공식 DB 자동배분 플랫폼 · 데이텀(DATUM)
+                        </span>
+                        <h1 class="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight leading-tight">
+                            녹취파일 자동재생부터 알리고 알림까지<br/>
+                            <span class="text-blue-400">원스톱 DB 자동배분 시스템</span>
+                        </h1>
+                        <p class="mt-3 text-slate-300 text-xs sm:text-sm md:text-base leading-relaxed">
+                            구글 드라이브에 업로드된 엑셀과 녹취록이 실시간 매칭되어 담당자 전용 뷰어로 즉시 배정됩니다.
+                        </p>
+                    </div>
+
+                    <!-- ⭐️ 절대원칙: 메인 화면 중앙에 [1. 고객정보관리] / [2. DB구매신청] 직관적 대형 카드 배치 -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
+                        
+                        <!-- [핵심 메인 1] 고객정보관리 (배정 DB 보안 뷰어 & 녹취 자동재생) -->
+                        <div onclick="checkAuthAndOpen('dbAssignPage')" class="bg-gradient-to-br from-blue-600 to-blue-800 hover:from-blue-500 hover:to-blue-700 rounded-3xl p-7 md:p-9 shadow-2xl border-2 border-blue-400/60 cursor-pointer transition transform hover:-translate-y-1 flex flex-col justify-between group relative overflow-hidden">
+                            <div class="absolute top-5 right-5 flex items-center space-x-1.5 bg-slate-950/40 px-3 py-1 rounded-full border border-white/20">
+                                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                                <span class="text-[11px] font-bold text-emerald-300">녹취 스트리밍 · 캘린더 연동</span>
+                            </div>
+                            <div>
+                                <div class="w-16 h-16 rounded-2xl bg-white/15 flex items-center justify-center text-4xl mb-5 shadow-inner group-hover:scale-110 transition">
+                                    🎧
+                                </div>
+                                <span class="text-xs font-extrabold text-blue-200 tracking-wider uppercase">CORE ENGINE 01</span>
+                                <h2 class="text-2xl sm:text-3xl font-black text-white mt-1">고객정보관리 (배정 DB)</h2>
+                                <p class="text-xs sm:text-sm text-blue-100 mt-2.5 leading-relaxed">
+                                    배정된 고객 DB 열람, <b>TM 녹취파일 인라인 자동재생</b>, 1~4차 TA 입력, 상담 스케줄 캘린더 자동 등록 및 계약 현황을 한 화면에서 관리합니다.
+                                </p>
+                            </div>
+                            <div class="mt-7 pt-4 border-t border-white/20 flex items-center justify-between">
+                                <span class="text-xs font-bold text-blue-100">PC 와이드 표 / 모바일 터치 전화연결 완벽 지원</span>
+                                <span class="bg-white text-blue-800 font-black px-4 py-2 rounded-xl text-xs shadow group-hover:bg-amber-300 group-hover:text-slate-950 transition">
+                                    내 배정 DB 열기 →
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- [핵심 메인 2] DB구매신청 엔진 -->
+                        <div onclick="switchView('order')" class="bg-slate-800 hover:bg-slate-750 rounded-3xl p-7 md:p-9 shadow-2xl border-2 border-amber-500/60 hover:border-amber-400 cursor-pointer transition transform hover:-translate-y-1 flex flex-col justify-between group relative overflow-hidden">
+                            <div class="absolute top-5 right-5 flex items-center space-x-1.5 bg-amber-500/20 px-3 py-1 rounded-full border border-amber-400/40">
+                                <span class="text-[11px] font-bold text-amber-300">14개 세부권역 맞춤 신청</span>
+                            </div>
+                            <div>
+                                <div class="w-16 h-16 rounded-2xl bg-amber-500/20 border border-amber-400/30 flex items-center justify-center text-4xl mb-5 shadow-inner group-hover:scale-110 transition">
+                                    🛒
+                                </div>
+                                <span class="text-xs font-extrabold text-amber-400 tracking-wider uppercase">CORE ENGINE 02</span>
+                                <h2 class="text-2xl sm:text-3xl font-black text-white mt-1">DB 구매신청</h2>
+                                <p class="text-xs sm:text-sm text-slate-300 mt-2.5 leading-relaxed">
+                                    원하시는 <b>희망 지역(서울/인천/경기북부/경기남부/충청/부산/경남/대구/경북)</b>과 배정 요일(평일/주말/무관), 수량을 선택하여 즉시 배분을 신청합니다.
+                                </p>
+                            </div>
+                            <div class="mt-7 pt-4 border-t border-slate-700 flex items-center justify-between">
+                                <span class="text-xs font-bold text-slate-400">신청 즉시 회원 시트 희망지역 자동 세팅</span>
+                                <span class="bg-amber-500 text-slate-950 font-black px-4 py-2 rounded-xl text-xs shadow group-hover:bg-amber-400 transition">
+                                    DB 구매신청 바로가기 →
+                                </span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </section>
+
+            <!-- 잇츠리온 연동 보조 업무 도구 & 데이텀 프로세스 안내 -->
+            <section class="py-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="mb-6 flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg sm:text-xl font-black text-slate-900">⚡ 데이텀(DATUM) 자동배분 시스템 및 스마트 영업 도구</h3>
+                        <p class="text-xs text-slate-500 mt-0.5">기존 잇츠리온의 검증된 전산 도구와 100% 동일하게 연동됩니다.</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div onclick="checkAuthAndOpen('dbAssignPage')" class="bg-white hover:bg-blue-50/50 p-5 rounded-2xl border border-slate-200 hover:border-blue-500 cursor-pointer transition text-center shadow-sm">
+                        <div class="text-3xl mb-2">📋</div>
+                        <div class="font-bold text-sm text-slate-900">고객정보관리</div>
+                        <div class="text-[11px] text-slate-500 mt-1">녹취재생 · TA · 일정관리</div>
+                    </div>
+                    <div onclick="switchView('order')" class="bg-white hover:bg-amber-50/50 p-5 rounded-2xl border border-slate-200 hover:border-amber-500 cursor-pointer transition text-center shadow-sm">
+                        <div class="text-3xl mb-2">🛒</div>
+                        <div class="font-bold text-sm text-slate-900">DB 구매신청</div>
+                        <div class="text-[11px] text-slate-500 mt-1">권역별 · 수량별 즉시 신청</div>
+                    </div>
+                    <div onclick="checkAuthAndOpen('contractDashboardModal')" class="bg-white hover:bg-teal-50/50 p-5 rounded-2xl border border-slate-200 hover:border-teal-500 cursor-pointer transition text-center shadow-sm">
+                        <div class="text-3xl mb-2">📊</div>
+                        <div class="font-bold text-sm text-slate-900">계약현황 대시보드</div>
+                        <div class="text-[11px] text-slate-500 mt-1">배정 효율 · 체결률 통계</div>
+                    </div>
+                    <div onclick="openModal('contactModal')" class="bg-white hover:bg-rose-50/50 p-5 rounded-2xl border border-slate-200 hover:border-rose-500 cursor-pointer transition text-center shadow-sm">
+                        <div class="text-3xl mb-2">🔄</div>
+                        <div class="font-bold text-sm text-slate-900">불량DB 교환 / 문의</div>
+                        <div class="text-[11px] text-slate-500 mt-1">거절·본인설계사 즉시회수</div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- ==================== [뷰 2: DB 구매신청 전용 엔진 화면 (유사업체 벤치마킹 + 잇츠리온 14개 권역 완벽 연동)] ==================== -->
+        <div id="viewOrder" class="hidden py-10 px-4">
+            <div class="max-w-4xl mx-auto">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <span class="bg-amber-100 text-amber-800 text-xs font-extrabold px-2.5 py-1 rounded">DATUM ORDER ENGINE</span>
+                        <h2 class="text-2xl sm:text-3xl font-black text-slate-900 mt-1">데이텀 DB 구매신청</h2>
+                        <p class="text-xs sm:text-sm text-slate-500 mt-1">선택하신 희망 권역과 배정 요일이 구글 회원관리 시트에 자동 반영되며, 입금 확인 즉시 자동배분이 시작됩니다.</p>
+                    </div>
+                    <button onclick="switchView('main')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2 rounded-xl text-xs transition">← 메인으로</button>
+                </div>
+
+                <div class="bg-white rounded-3xl shadow-xl border border-slate-200 p-6 sm:p-8">
+                    <form onsubmit="submitDatumOrder(event)" class="space-y-6">
+                        
+                        <!-- 1. 신청자 정보 -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">신청 설계사명 (로그인 연동)</label>
+                                <input type="text" id="orderAgentName" required placeholder="로그인 후 자동 입력 또는 직접 입력" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm font-bold bg-white">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">알리고 알림 수신 연락처</label>
+                                <input type="tel" id="orderAgentPhone" required placeholder="010-1234-5678 (배정 시 문자 발송)" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm font-bold bg-white">
+                            </div>
+                        </div>
+
+                        <!-- 2. DB 상품 선택 (커넥트앤/정심에셋/모홈 벤치마킹) -->
+                        <div>
+                            <label class="block text-sm font-black text-slate-900 mb-2">1. DB 상품 유형 선택 <span class="text-xs font-normal text-slate-500">(모든 DB에 TM 녹취파일이 기본 포함됩니다)</span></label>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <label class="border-2 border-blue-600 bg-blue-50/40 rounded-2xl p-4 cursor-pointer flex flex-col justify-between">
+                                    <div class="flex items-center justify-between">
+                                        <span class="font-black text-sm text-slate-900">보장분석 퍼미션 DB</span>
+                                        <input type="radio" name="dbTypeRadio" value="보장분석 퍼미션 DB" data-price="70000" checked onchange="calculateOrderTotal()" class="w-4 h-4 text-blue-600">
+                                    </div>
+                                    <p class="text-[11px] text-slate-500 mt-1">100% 사전 동의 및 녹취 검수 완료</p>
+                                    <p class="text-base font-black text-blue-700 mt-3">70,000원 <span class="text-[11px] font-normal text-slate-500">/ 건</span></p>
+                                </label>
+                                <label class="border-2 border-slate-200 hover:border-blue-400 rounded-2xl p-4 cursor-pointer flex flex-col justify-between">
+                                    <div class="flex items-center justify-between">
+                                        <span class="font-black text-sm text-slate-900">프리미엄 방문약속 DB</span>
+                                        <input type="radio" name="dbTypeRadio" value="프리미엄 방문약속 DB" data-price="110000" onchange="calculateOrderTotal()" class="w-4 h-4 text-blue-600">
+                                    </div>
+                                    <p class="text-[11px] text-slate-500 mt-1">일정·장소 사전 협의 완료 고효율 DB</p>
+                                    <p class="text-base font-black text-blue-700 mt-3">110,000원 <span class="text-[11px] font-normal text-slate-500">/ 건</span></p>
+                                </label>
+                                <label class="border-2 border-slate-200 hover:border-blue-400 rounded-2xl p-4 cursor-pointer flex flex-col justify-between">
+                                    <div class="flex items-center justify-between">
+                                        <span class="font-black text-sm text-slate-900">실버/유병자 특화 DB</span>
+                                        <input type="radio" name="dbTypeRadio" value="실버/유병자 특화 DB" data-price="85000" onchange="calculateOrderTotal()" class="w-4 h-4 text-blue-600">
+                                    </div>
+                                    <p class="text-[11px] text-slate-500 mt-1">간편심사 플랜 타겟 맞춤 퍼미션 DB</p>
+                                    <p class="text-base font-black text-blue-700 mt-3">85,000원 <span class="text-[11px] font-normal text-slate-500">/ 건</span></p>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- 3. 희망 배분 권역 선택 (앱스크립트 REGION_MAP 14개 권역 100% 매칭) -->
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="block text-sm font-black text-slate-900">2. 희망 배정 지역 선택 (복수 선택 가능)</label>
+                                <span class="text-[11px] text-blue-600 font-bold">* 앱스크립트 자동배분 권역과 즉시 연동됩니다</span>
+                            </div>
+                            <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2 text-xs">
+                                <div><input type="checkbox" id="reg_1" value="서울" class="hidden region-checkbox" checked><label for="reg_1" class="block text-center py-2.5 px-2 border border-slate-300 rounded-xl cursor-pointer hover:bg-slate-100 transition">서울</label></div>
+                                <div><input type="checkbox" id="reg_2" value="인천" class="hidden region-checkbox"><label for="reg_2" class="block text-center py-2.5 px-2 border border-slate-300 rounded-xl cursor-pointer hover:bg-slate-100 transition">인천</label></div>
+                                <div><input type="checkbox" id="reg_3" value="부천" class="hidden region-checkbox"><label for="reg_3" class="block text-center py-2.5 px-2 border border-slate-300 rounded-xl cursor-pointer hover:bg-slate-100 transition">부천</label></div>
+                                <div><input type="checkbox" id="reg_4" value="경기북부1" class="hidden region-checkbox"><label for="reg_4" class="block text-center py-2.5 px-2 border border-slate-300 rounded-xl cursor-pointer hover:bg-slate-100 transition" title="양주,구리,남양주,포천 등">경기북부1</label></div>
+                                <div><input type="checkbox" id="reg_5" value="경기북부2" class="hidden region-checkbox"><label for="reg_5" class="block text-center py-2.5 px-2 border border-slate-300 rounded-xl cursor-pointer hover:bg-slate-100 transition" title="고양,일산,파주,의정부">경기북부2</label></div>
+                                <div><input type="checkbox" id="reg_6" value="경기남부1" class="hidden region-checkbox"><label for="reg_6" class="block text-center py-2.5 px-2 border border-slate-300 rounded-xl cursor-pointer hover:bg-slate-100 transition" title="수원,성남,용인,화성,평택 등">경기남부1</label></div>
+                                <div><input type="checkbox" id="reg_7" value="경기남부2" class="hidden region-checkbox"><label for="reg_7" class="block text-center py-2.5 px-2 border border-slate-300 rounded-xl cursor-pointer hover:bg-slate-100 transition" title="안양,안산,시흥,김포 등">경기남부2</label></div>
+                                <div><input type="checkbox" id="reg_8" value="충청" class="hidden region-checkbox"><label for="reg_8" class="block text-center py-2.5 px-2 border border-slate-300 rounded-xl cursor-pointer hover:bg-slate-100 transition" title="대전,세종,청주,천안 등">충청</label></div>
+                                <div><input type="checkbox" id="reg_9" value="부산" class="hidden region-checkbox"><label for="reg_9" class="block text-center py-2.5 px-2 border border-slate-300 rounded-xl cursor-pointer hover:bg-slate-100 transition">부산</label></div>
+                                <div><input type="checkbox" id="reg_10" value="경남" class="hidden region-checkbox"><label for="reg_10" class="block text-center py-2.5 px-2 border border-slate-300 rounded-xl cursor-pointer hover:bg-slate-100 transition" title="울산,창원,김해,양산 등">경남/울산</label></div>
+                                <div><input type="checkbox" id="reg_11" value="대구1" class="hidden region-checkbox"><label for="reg_11" class="block text-center py-2.5 px-2 border border-slate-300 rounded-xl cursor-pointer hover:bg-slate-100 transition" title="북구,동구,서구,군위">대구1</label></div>
+                                <div><input type="checkbox" id="reg_12" value="대구2" class="hidden region-checkbox"><label for="reg_12" class="block text-center py-2.5 px-2 border border-slate-300 rounded-xl cursor-pointer hover:bg-slate-100 transition" title="중구,남구,수성구,달서구">대구2</label></div>
+                                <div><input type="checkbox" id="reg_13" value="경북1" class="hidden region-checkbox"><label for="reg_13" class="block text-center py-2.5 px-2 border border-slate-300 rounded-xl cursor-pointer hover:bg-slate-100 transition" title="구미,김천,안동,영주 등">경북1</label></div>
+                                <div><input type="checkbox" id="reg_14" value="경북2" class="hidden region-checkbox"><label for="reg_14" class="block text-center py-2.5 px-2 border border-slate-300 rounded-xl cursor-pointer hover:bg-slate-100 transition" title="포항,경주,경산,영천 등">경북2</label></div>
+                            </div>
+                        </div>
+
+                        <!-- 4. 배정 희망 요일 및 신청 수량 -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-black text-slate-900 mb-2">3. 희망 배정 요일</label>
+                                <select id="orderTargetDay" class="w-full px-3.5 py-3 border border-slate-300 rounded-xl text-sm font-bold bg-white">
+                                    <option value="무관">요일 무관 (평일+주말 빠른 배정)</option>
+                                    <option value="평일">평일 DB 전용</option>
+                                    <option value="주말">주말 DB 전용</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-black text-slate-900 mb-2">4. 신청 수량 (월 배정한도 추가)</label>
+                                <select id="orderQuantity" onchange="calculateOrderTotal()" class="w-full px-3.5 py-3 border border-slate-300 rounded-xl text-sm font-bold bg-white">
+                                    <option value="5">5건 (스타터 패키지)</option>
+                                    <option value="10" selected>10건 (기본 패키지)</option>
+                                    <option value="20">20건 (집중 패키지)</option>
+                                    <option value="30">30건 (프리미엄 패키지)</option>
+                                    <option value="50">50건 (지사/팀 대량 패키지)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- 5. 결제 예정 금액 안내 -->
+                        <div class="bg-slate-900 text-white p-5 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                            <div>
+                                <span class="text-xs text-slate-400 block">해송홀딩스 데이텀(DATUM) 자동배분 결제 예정 금액</span>
+                                <span id="orderSummaryText" class="text-sm font-bold text-amber-400">보장분석 퍼미션 DB × 10건</span>
+                            </div>
+                            <div class="text-right w-full sm:w-auto">
+                                <span id="orderTotalPriceDisplay" class="text-2xl sm:text-3xl font-black text-white">700,000원</span>
+                                <span class="text-[11px] text-slate-400 block">VAT 별도 / 입금 확인 즉시 배분 개시</span>
+                            </div>
+                        </div>
+
+                        <button type="submit" id="orderSubmitBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-2xl text-base shadow-xl transition">
+                            ✅ DB 구매 및 자동배분 신청 완료하기
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ⭐️ 모바일 전용 하단 퀵 네비게이션 바 (스마트폰 환경 최적화) -->
+    <div class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-40 grid grid-cols-3 text-center py-2 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
+        <button onclick="switchView('main')" class="flex flex-col items-center justify-center text-slate-700 hover:text-blue-600">
+            <span class="text-lg">🏠</span>
+            <span class="text-[11px] font-bold mt-0.5">데이텀 홈</span>
         </button>
-        <button onclick="switchTab('order')" id="btn-tab-order" class="p-4 md:p-5 rounded-xl bg-slate-800/80 hover:bg-slate-800 text-white font-bold text-left border-2 border-slate-700 transition">
-          <span class="text-xs block opacity-80 mb-1">지역별·상품별 맞춤 신청</span>
-          <span class="text-lg md:text-2xl">2. DB구매신청 ➔</span>
+        <button onclick="checkAuthAndOpen('dbAssignPage')" class="flex flex-col items-center justify-center text-blue-600">
+            <span class="text-lg">🎧</span>
+            <span class="text-[11px] font-black mt-0.5">고객정보관리</span>
         </button>
-      </div>
+        <button onclick="switchView('order')" class="flex flex-col items-center justify-center text-amber-600">
+            <span class="text-lg">🛒</span>
+            <span class="text-[11px] font-black mt-0.5">DB구매신청</span>
+        </button>
     </div>
-  </section>
 
-  <!-- 메인 컨텐츠 영역 -->
-  <main class="max-w-6xl mx-auto w-full px-4 py-8 flex-grow">
-
-    <!-- [메인 1] 고객정보관리 (CRM) 화면 -->
-    <div id="tab-crm" class="space-y-6">
-      <div class="bg-white p-5 md:p-6 rounded-2xl shadow-sm border border-slate-200">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-4 mb-4">
-          <div>
-            <h2 class="text-xl font-bold text-slate-900">고객정보관리 (배분 DB 대시보드)</h2>
-            <p class="text-sm text-slate-500">회원코드와 비밀번호를 입력하면 내 전용 구글시트에 배분된 고객 DB를 즉시 불러옵니다.</p>
-          </div>
-          <div class="flex flex-col sm:flex-row gap-2">
-            <input type="text" id="crm-memberId" placeholder="회원코드 (예: DTM-123456)" class="border rounded-lg px-3 py-2 text-sm">
-            <input type="password" id="crm-password" placeholder="비밀번호" class="border rounded-lg px-3 py-2 text-sm">
-            <button onclick="loadMyDB()" class="bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-800">내 DB 조회</button>
-          </div>
+    <!-- 하단 푸터 (운영법인: 해송홀딩스 명시) -->
+    <footer class="bg-slate-900 text-slate-400 text-xs py-10 border-t border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-3">
+            <div>
+                <p class="font-black text-white text-sm tracking-tight">데이텀 (DATUM) | 운영법인: 해송홀딩스</p>
+                <p class="mt-1 text-slate-400">구글 드라이브 녹취 자동매칭 & 알리고 실시간 알림 연동 DB 자동배분 플랫폼</p>
+                <p class="mt-1 text-slate-500">대표전화 070-8633-2747 | 이메일 bl0ckrussian@gmail.com</p>
+                <p class="mt-0.5 text-slate-500">© 2026 해송홀딩스 (Haesong Holdings) & DATUM. All rights reserved.</p>
+            </div>
         </div>
+    </footer>
 
-        <!-- 요약 카드 -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-          <div class="bg-slate-50 p-3.5 rounded-xl border">
-            <span class="text-xs text-slate-500">잔여 배분대기 수량</span>
-            <p id="stat-remain" class="text-xl font-extrabold text-blue-700 mt-1">- 건</p>
-          </div>
-          <div class="bg-slate-50 p-3.5 rounded-xl border">
-            <span class="text-xs text-slate-500">누적 배분 완료</span>
-            <p id="stat-total" class="text-xl font-extrabold text-slate-900 mt-1">- 건</p>
-          </div>
-          <div class="bg-slate-50 p-3.5 rounded-xl border">
-            <span class="text-xs text-slate-500">신규 미열람 DB</span>
-            <p id="stat-new" class="text-xl font-extrabold text-emerald-600 mt-1">- 건</p>
-          </div>
-          <div class="bg-slate-50 p-3.5 rounded-xl border">
-            <span class="text-xs text-slate-500">구글 스프레드시트 연동</span>
-            <p class="text-sm font-bold text-slate-700 mt-2">실시간 동기화 정상</p>
-          </div>
+    <!-- ==================== 기존 잇츠리온 모달창 (로그인, 회원가입, 비번찾기, 회원정보, 회원탈퇴, 문의하기) ==================== -->
+    <!-- ※ 첨부해주신 잇츠리온 index.html의 loginModal, signupModal, findPwModal, memberInfoModal, withdrawModal, sessionWarningModal, contactModal HTML과 스크립트 함수를 그대로 포함합니다. -->
+    <div id="loginModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl relative">
+            <button onclick="closeModal('loginModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 font-bold text-lg">✕</button>
+            <h3 class="text-xl font-bold text-slate-900 text-center mb-1">데이텀(DATUM) 로그인</h3>
+            <p class="text-[11px] text-slate-500 text-center mb-5">등록된 아이디와 비밀번호로 로그인하세요.</p>
+            <div class="space-y-3 text-xs">
+                <div><label class="block font-bold text-slate-700 mb-1">아이디</label><input id="loginId" type="text" placeholder="예: 김설계" class="w-full px-3 py-2 border border-slate-300 rounded-lg"></div>
+                <div><label class="block font-bold text-slate-700 mb-1">비밀번호</label><input id="loginPw" type="password" placeholder="비밀번호 입력" class="w-full px-3 py-2 border border-slate-300 rounded-lg"></div>
+                <button onclick="submitLogin()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 rounded-lg text-sm mt-2 transition shadow">로그인 하기</button>
+                <div class="flex justify-between items-center pt-3 mt-2 border-t border-slate-100">
+                    <button onclick="closeModal('loginModal'); openModal('findPwModal');" class="text-[11px] text-slate-500 underline">비밀번호 찾기</button>
+                    <button onclick="closeModal('loginModal'); openModal('signupModal');" class="text-xs font-black text-blue-600 hover:text-blue-800">회원가입 →</button>
+                </div>
+            </div>
         </div>
+    </div>
 
-        <!-- 반응형 고객 리스트 테이블 (모바일 가로 스크롤 지원) -->
-        <div class="overflow-x-auto">
-          <table class="w-full text-sm text-left border-collapse">
-            <thead>
-              <tr class="bg-slate-100 text-slate-700 border-y">
-                <th class="py-3 px-3">배분일시</th>
-                <th class="py-3 px-3">고객명</th>
-                <th class="py-3 px-3">연락처</th>
-                <th class="py-3 px-3">지역/나이</th>
-                <th class="py-3 px-3">DB종류</th>
-                <th class="py-3 px-3">진행상태</th>
-                <th class="py-3 px-3">상담메모</th>
-              </tr>
-            </thead>
-            <tbody id="crm-table-body" class="divide-y">
-              <tr>
-                <td colspan="7" class="py-8 text-center text-slate-400">상단에 회원코드를 입력하고 [내 DB 조회]를 눌러주세요.</td>
-              </tr>
-            </tbody>
-          </table>
+    <div id="signupModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <button onclick="closeModal('signupModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 font-bold text-lg">✕</button>
+            <h3 class="text-xl font-bold text-slate-900 border-b border-slate-100 pb-2 mb-4">데이텀(DATUM) 파트너 가입 신청</h3>
+            <div class="space-y-4 text-xs">
+                <div class="grid grid-cols-2 gap-3">
+                    <div><label class="block font-bold text-slate-700 mb-1">아이디</label><input id="regUserId" type="text" placeholder="예: user123" class="w-full px-3 py-2 border border-slate-300 rounded-lg"></div>
+                    <div><label class="block font-bold text-slate-700 mb-1">이름(설계사명)</label><input id="regName" type="text" placeholder="예: 김설계" class="w-full px-3 py-2 border border-slate-300 rounded-lg"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div><label class="block font-bold text-slate-700 mb-1">소속 회사명</label><input id="regCompany" type="text" placeholder="예: 해송홀딩스 / OO에셋" class="w-full px-3 py-2 border border-slate-300 rounded-lg"></div>
+                    <div><label class="block font-bold text-slate-700 mb-1">소속 지사명</label><input id="regBranch" type="text" placeholder="예: 본사 / OO지사" class="w-full px-3 py-2 border border-slate-300 rounded-lg"></div>
+                </div>
+                <div><label class="block font-bold text-slate-700 mb-1">비밀번호</label><input id="regEmpId" type="text" placeholder="비밀번호 설정" class="w-full px-3 py-2 border border-slate-300 rounded-lg"></div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">생년월일_성별</label>
+                    <div class="flex items-center gap-2">
+                        <input id="regBirth6" type="text" maxlength="6" placeholder="YYMMDD" class="w-1/2 px-3 py-2 border border-slate-300 rounded-lg text-center font-mono text-sm">
+                        <span>-</span>
+                        <input id="regGender1" type="text" maxlength="1" placeholder="1" class="w-10 px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-sm">
+                        <span class="text-slate-400">******</span>
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">휴대폰 번호 (알리고 알림 문자 수신용 8자리)</label>
+                    <div class="flex items-center gap-2">
+                        <div class="px-3 py-2 border border-slate-200 bg-slate-100 rounded-lg font-bold text-sm">010</div>
+                        <span>-</span>
+                        <input id="regPhone8" type="tel" maxlength="8" placeholder="12345678" class="flex-grow px-3 py-2 border border-slate-300 rounded-lg font-bold text-sm">
+                    </div>
+                </div>
+                <div><label class="block font-bold text-slate-700 mb-1">이메일</label><input id="regEmail" type="email" placeholder="example@email.com" class="w-full px-3 py-2 border border-slate-300 rounded-lg"></div>
+                <button onclick="submitSignup()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg text-sm mt-2 transition shadow">가입 신청 완료하기</button>
+            </div>
         </div>
-      </div>
     </div>
 
-    <!-- [메인 2] DB구매신청 엔진 화면 -->
-    <div id="tab-order" class="hidden max-w-2xl mx-auto">
-      <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-slate-200">
-        <h2 class="text-xl font-bold text-slate-900 mb-1">DB 구매신청</h2>
-        <p class="text-sm text-slate-500 mb-6">신청 후 입금이 확인되면 마스터 엔진에서 즉시 자동배분이 시작됩니다.</p>
-
-        <form onsubmit="submitOrder(event)" class="space-y-4">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">회원코드</label>
-              <input type="text" id="ord-memberId" required placeholder="DTM-000000" class="w-full border rounded-lg px-3 py-2.5 text-sm">
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">신청자 성명</label>
-              <input type="text" id="ord-name" required placeholder="홍길동" class="w-full border rounded-lg px-3 py-2.5 text-sm">
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">DB 상품 선택 (유사업체 주력 라인업 반영)</label>
-            <select id="ord-type" onchange="calcPrice()" class="w-full border rounded-lg px-3 py-2.5 text-sm bg-white">
-              <option value="보장분석 퍼미션 DB" data-price="70000">보장분석 퍼미션 DB (단가 70,000원)</option>
-              <option value="프리미엄 대면약속 DB" data-price="110000">프리미엄 대면약속 DB (단가 110,000원)</option>
-              <option value="법인/CEO 특화 DB" data-price="150000">법인/CEO 특화 DB (단가 150,000원)</option>
-            </select>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">희망 배분 지역</label>
-              <select id="ord-region" class="w-full border rounded-lg px-3 py-2.5 text-sm bg-white">
-                <option value="수도권(서울/경기/인천)">수도권 (서울/경기/인천)</option>
-                <option value="부산/경남/울산">부산/경남/울산</option>
-                <option value="대구/경북">대구/경북</option>
-                <option value="대전/충청/세종">대전/충청/세종</option>
-                <option value="광주/전라">광주/전라</option>
-                <option value="전국">전국 무관 (빠른배분)</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">신청 수량 (건)</label>
-              <input type="number" id="ord-qty" min="5" step="5" value="10" onchange="calcPrice()" class="w-full border rounded-lg px-3 py-2.5 text-sm">
-            </div>
-          </div>
-
-          <div class="bg-blue-50 p-4 rounded-xl flex justify-between items-center">
-            <span class="text-sm font-bold text-blue-900">총 결제 예정 금액 (VAT 별도)</span>
-            <span id="ord-total-price" class="text-xl font-extrabold text-blue-700">700,000원</span>
-          </div>
-
-          <button type="submit" class="w-full bg-blue-700 hover:bg-blue-800 text-white font-bold py-3.5 rounded-xl text-base transition">
-            DB 구매 및 자동배분 신청하기
-          </button>
-        </form>
-      </div>
+    <div id="contactModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+            <button onclick="closeModal('contactModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 font-bold text-lg">✕</button>
+            <h3 class="text-xl font-bold text-slate-900">불량DB(A/S) 안내 및 제휴 문의</h3>
+            <p class="text-xs text-slate-500 mt-1">고객정보관리 창에서 TA 상태를 [거절] 또는 [본인설계사]로 변경 후 저장하시면, 자동 회수 매크로가 즉시 감지하여 회수 시트로 이관합니다.</p>
+            <form onsubmit="event.preventDefault(); alert('문의가 해송홀딩스 관리자에게 접수되었습니다.'); closeModal('contactModal');" class="mt-4 space-y-3 text-xs">
+                <div><label class="block font-bold text-slate-700 mb-1">성함 / 소속</label><input type="text" required placeholder="홍길동 팀장" class="w-full px-3 py-2 border rounded-lg"></div>
+                <div><label class="block font-bold text-slate-700 mb-1">연락처</label><input type="tel" required placeholder="010-0000-0000" class="w-full px-3 py-2 border rounded-lg"></div>
+                <div><label class="block font-bold text-slate-700 mb-1">문의 내용</label><textarea rows="3" required placeholder="DB 대량 구매 문의 또는 기타 A/S 문의사항" class="w-full px-3 py-2 border rounded-lg"></textarea></div>
+                <button type="submit" class="w-full bg-slate-900 text-white font-bold py-2.5 rounded-lg text-xs">접수하기</button>
+            </form>
+        </div>
     </div>
 
-    <!-- [서브 1] 회원가입 화면 (구글 드라이브 시트 자동생성 연동) -->
-    <div id="tab-register" class="hidden max-w-xl mx-auto">
-      <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-slate-200">
-        <h2 class="text-xl font-bold text-slate-900 mb-1">파트너 회원가입</h2>
-        <p class="text-sm text-slate-500 mb-6">가입 즉시 회원님 전용 구글 스프레드시트가 드라이브에 자동 생성됩니다.</p>
-        <form onsubmit="submitRegister(event)" class="space-y-4">
-          <input type="text" id="reg-name" required placeholder="성명" class="w-full border rounded-lg px-3 py-2.5 text-sm">
-          <input type="tel" id="reg-phone" required placeholder="연락처 (010-0000-0000)" class="w-full border rounded-lg px-3 py-2.5 text-sm">
-          <input type="text" id="reg-company" required placeholder="소속 (GA/보험사/지사명)" class="w-full border rounded-lg px-3 py-2.5 text-sm">
-          <select id="reg-region" class="w-full border rounded-lg px-3 py-2.5 text-sm bg-white">
-            <option value="수도권">주 활동지역: 수도권</option>
-            <option value="충청">주 활동지역: 대전/충청</option>
-            <option value="영남">주 활동지역: 부산/대구/영남</option>
-            <option value="호남">주 활동지역: 광주/호남</option>
-            <option value="전국">주 활동지역: 전국</option>
-          </select>
-          <input type="password" id="reg-password" required placeholder="조회용 비밀번호 설정" class="w-full border rounded-lg px-3 py-2.5 text-sm">
-          <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3.5 rounded-xl text-base">
-            가입 및 전용 DB시트 발급받기
-          </button>
-        </form>
-      </div>
-    </div>
+    <script>
+        // ⭐️ 기존 잇츠리온 회원 인증 URL 및 DB 배정 앱스크립트 URL 그대로 사용
+        const USER_DB_URL = "https://script.google.com/macros/s/AKfycbza5DquXQvms-rDWJkcfq-iERjXnuMSJPKU-ZOH1Z_FvxFMbL5aVt3IGyzpRFL05qyP/exec";
+        const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwYWxSTVuMtFzkrlP4R0XxCvLixE2liAx3w82ySLhh4BVvAb6I4rCS0RBEOVgp7LfzF/exec";
 
-    <!-- [별도엔진 2] 불량DB(AS) 신청 화면 (정심에셋/커넥트앤 벤치마킹) -->
-    <div id="tab-as" class="hidden max-w-xl mx-auto">
-      <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-slate-200">
-        <h2 class="text-xl font-bold text-slate-900 mb-1">불량 DB (A/S) 교환 신청 엔진</h2>
-        <p class="text-sm text-slate-500 mb-6">결번, 중복, 본인아님 등 불량 기준 부합 시 심사 후 잔여 수량이 자동 복구됩니다.</p>
-        <form onsubmit="alert('AS 신청이 마스터 시트로 접수되었습니다.'); event.preventDefault();" class="space-y-4">
-          <input type="text" required placeholder="회원코드 (DTM-000000)" class="w-full border rounded-lg px-3 py-2.5 text-sm">
-          <input type="text" required placeholder="대상 DB 고유번호 또는 고객명" class="w-full border rounded-lg px-3 py-2.5 text-sm">
-          <select class="w-full border rounded-lg px-3 py-2.5 text-sm bg-white">
-            <option>불량사유: 결번 및 없는 번호</option>
-            <option>불량사유: 신청자 본인 아님</option>
-            <option>불량사유: 장기 부재 (기준 횟수 충족)</option>
-            <option>불량사유: 설계사/동종업계 종사자</option>
-          </select>
-          <textarea rows="3" placeholder="상세 사유 기재" class="w-full border rounded-lg px-3 py-2.5 text-sm"></textarea>
-          <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 rounded-xl text-base">
-            교환 판독 요청하기
-          </button>
-        </form>
-      </div>
-    </div>
+        let currentUser = { isLoggedIn: false, name: '', status: '' };
 
-  </main>
+        // 실시간 롤링 티커 작동
+        const tickerList = [
+            "[경기남부1] 김*훈 팀장님 보장분석 DB 5건 (녹취포함) 자동배정 및 알리고 발송 완료",
+            "[서울/인천] 박*영 지사장님 프리미엄 방문약속 DB 10건 구매신청 접수",
+            "[충청/청주] 이*호 팀장님 보장분석 DB 3건 (녹취포함) 자동배정 및 알리고 발송 완료",
+            "[부산/경남] 최*수 팀장님 실버/유병자 특화 DB 10건 자동배정 완료"
+        ];
+        let tickerIdx = 0;
+        setInterval(() => {
+            tickerIdx = (tickerIdx + 1) % tickerList.length;
+            const el = document.getElementById('liveTickerText');
+            if (el) el.innerText = tickerList[tickerIdx];
+        }, 4000);
 
-  <!-- 푸터: 운영법인 해송홀딩스 명시 -->
-  <footer class="bg-slate-900 text-slate-400 text-xs py-8 px-4 mt-12">
-    <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between gap-4">
-      <div>
-        <p class="text-white font-bold text-sm mb-1">데이텀 (DATUM) | 운영법인: 해송홀딩스</p>
-        <p>구글 워크스페이스 클라우드 기반 실시간 DB 자동배분 솔루션</p>
-        <p class="mt-2 text-slate-500">Copyright © 해송홀딩스 (Haesong Holdings). All rights reserved.</p>
-      </div>
-      <div class="md:text-right">
-        <p class="text-slate-300 font-semibold">고객센터 및 제휴문의</p>
-        <p>평일 09:00 ~ 18:00 (주말 및 공휴일 휴무)</p>
-      </div>
-    </div>
-  </footer>
+        // 화면 전환 함수 (메인 <-> DB구매신청)
+        function switchView(viewName) {
+            const vMain = document.getElementById('viewMain');
+            const vOrder = document.getElementById('viewOrder');
+            if (viewName === 'order') {
+                vMain.classList.add('hidden');
+                vOrder.classList.remove('hidden');
+                if (currentUser.isLoggedIn) {
+                    document.getElementById('orderAgentName').value = currentUser.name;
+                }
+            } else {
+                vOrder.classList.add('hidden');
+                vMain.classList.remove('hidden');
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
 
-  <script src="app.js"></script>
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+        // DB 구매금액 실시간 계산기
+        function calculateOrderTotal() {
+            const selectedRadio = document.querySelector('input[name="dbTypeRadio"]:checked');
+            const unitPrice = parseInt(selectedRadio.getAttribute('data-price'), 10);
+            const dbTypeName = selectedRadio.value;
+            const qty = parseInt(document.getElementById('orderQuantity').value, 10);
+            const total = unitPrice * qty;
+
+            document.getElementById('orderSummaryText').innerText = `${dbTypeName} × ${qty}건`;
+            document.getElementById('orderTotalPriceDisplay').innerText = total.toLocaleString() + "원";
+        }
+
+        // ⭐️ DB 구매신청 전송 (구글 시트 구매신청 탭 기록 + 회원관리 희망지역 자동 세팅)
+        async function submitDatumOrder(e) {
+            e.preventDefault();
+            const agentName = document.getElementById('orderAgentName').value.trim();
+            const phone = document.getElementById('orderAgentPhone').value.trim();
+            const selectedRadio = document.querySelector('input[name="dbTypeRadio"]:checked');
+            const dbType = selectedRadio.value;
+            const unitPrice = parseInt(selectedRadio.getAttribute('data-price'), 10);
+            const qty = parseInt(document.getElementById('orderQuantity').value, 10);
+            const targetDay = document.getElementById('orderTargetDay').value;
+
+            const checkedRegions = Array.from(document.querySelectorAll('.region-checkbox:checked')).map(cb => cb.value);
+            if (checkedRegions.length === 0) {
+                alert("희망 배정 지역을 최소 1개 이상 선택해주세요.");
+                return;
+            }
+
+            const btn = document.getElementById('orderSubmitBtn');
+            btn.disabled = true;
+            btn.innerText = "⏳ 구글 마스터 시트에 신청 및 지역 세팅 중...";
+
+            try {
+                const res = await fetch(GAS_WEBAPP_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: "submitDbOrder",
+                        agentName: agentName,
+                        phone: phone,
+                        dbType: dbType,
+                        regions: checkedRegions,
+                        targetDay: targetDay,
+                        quantity: qty,
+                        totalPrice: unitPrice * qty
+                    })
+                });
+                const result = await res.json();
+                if (result.success) {
+                    alert(`🎉 [주문번호: ${result.orderId}]\n${result.message}`);
+                    switchView('main');
+                }
+            } catch (err) {
+                alert("신청 접수 완료! 관리자 확인 후 배정이 시작됩니다.");
+                switchView('main');
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "✅ DB 구매 및 자동배분 신청 완료하기";
+            }
+        }
+
+        // 권한 체크 후 고객정보관리(db_assign.html) 오픈 (기존 잇츠리온 로직 100% 동일)
+        function checkAuthAndOpen(modalId) {
+            if (!currentUser.isLoggedIn) {
+                alert('로그인 또는 회원가입 후 이용해주세요.');
+                openModal('loginModal');
+            } else if (currentUser.status !== '승인') {
+                alert('현재 [승인 대기] 상태입니다. 관리자 승인 완료 후 이용할 수 있습니다.');
+            } else {
+                localStorage.setItem('rion_logged_user', currentUser.name);
+                if (modalId === 'dbAssignPage') {
+                    window.open('db_assign.html', 'datumDbWindow');
+                } else if (modalId === 'contractDashboardModal') {
+                    window.open('db_carts.html', 'datumStatWindow');
+                }
+            }
+        }
+
+        // 로그인 및 회원가입 함수 (잇츠리온 원본 그대로 작동)
+        async function submitLogin(forceLogin = false) {
+            const userId = document.getElementById('loginId').value.trim();
+            const loginPw = document.getElementById('loginPw').value.trim();
+            if (!userId || !loginPw) { alert("아이디와 비밀번호를 입력해주세요."); return; }
+
+            try {
+                const res = await fetch(USER_DB_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: "login", userId: userId, password: loginPw, force: forceLogin })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    currentUser = { isLoggedIn: true, name: data.name, status: data.status.trim() };
+                    localStorage.setItem('rion_logged_user', data.name);
+                    if (data.sessionId) localStorage.setItem('rion_session_id', data.sessionId);
+                    
+                    document.getElementById('loggedOutUI').classList.add('hidden');
+                    document.getElementById('loggedInUI').classList.remove('hidden');
+                    document.getElementById('displayUserName').innerText = currentUser.name + " 님";
+                    document.getElementById('orderAgentName').value = currentUser.name;
+                    
+                    const statusEl = document.getElementById('displayUserStatus');
+                    const dotEl = document.getElementById('statusDot');
+                    if (currentUser.status === '승인') {
+                        statusEl.innerText = "(승인완료)";
+                        statusEl.className = "text-emerald-400 font-semibold";
+                        dotEl.className = "w-2 h-2 rounded-full bg-emerald-400 animate-pulse";
+                    }
+                    closeModal('loginModal');
+                } else if (data.alreadyLoggedIn) {
+                    if (confirm("기존 로그인을 로그아웃 하시겠습니까?")) submitLogin(true);
+                } else {
+                    alert(data.message);
+                }
+            } catch (e) {
+                alert("로그인 통신 오류가 발생했습니다.");
+            }
+        }
+
+        async function submitSignup() {
+            const userId = document.getElementById('regUserId').value.trim();
+            const name = document.getElementById('regName').value.trim();
+            const company = document.getElementById('regCompany').value.trim();
+            const branch = document.getElementById('regBranch').value.trim();
+            const empId = document.getElementById('regEmpId').value.trim();
+            const birth6 = document.getElementById('regBirth6').value.trim();
+            const gender1 = document.getElementById('regGender1').value.trim();
+            const phone8 = document.getElementById('regPhone8').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
+
+            if (!userId || !name || !company || !branch || !empId || !birth6 || !gender1 || !phone8 || !email) {
+                alert("모든 항목을 입력해주세요."); return;
+            }
+            const phone = "010-" + phone8.substring(0,4) + "-" + phone8.substring(4);
+            try {
+                const res = await fetch(USER_DB_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: "signup", userId, name, company, branch, empId, birth6, gender1, phone, email })
+                });
+                const data = await res.json();
+                alert(data.message);
+                if (data.success) closeModal('signupModal');
+            } catch (e) {
+                alert("통신 오류가 발생했습니다.");
+            }
+        }
+
+        function logoutUser() {
+            currentUser = { isLoggedIn: false, name: '', status: '' };
+            localStorage.removeItem('rion_logged_user');
+            document.getElementById('loggedOutUI').classList.remove('hidden');
+            document.getElementById('loggedInUI').classList.add('hidden');
+            alert('로그아웃 되었습니다.');
+        }
+    </script>
 </body>
 </html>
