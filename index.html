@@ -3,17 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>데이텀 (DATUM) - DB 구매 및 배정 플랫폼</title>
+    <title>데이텀 (DATUM) - DB 주문 및 배정 플랫폼</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
         body { font-family: 'Pretendard', -apple-system, sans-serif; background-color: #FFFFFF; color: #0F172A; }
-        .region-checkbox:checked + label { background-color: #2563EB; color: #FFFFFF; border-color: #2563EB; font-weight: 700; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col bg-white text-slate-900 pb-16 md:pb-0">
 
-    <!-- 상단 헤더: 좌측 로고 / 중앙 홈 메뉴 / 우측 상단 로그인 메뉴 (박스 및 문구 제거) -->
+    <!-- 상단 헤더: 좌측 로고 / 중앙 홈 메뉴 / 우측 상단 로그인 메뉴 -->
     <header class="bg-white border-b border-slate-200 sticky top-0 z-40">
         <div class="max-w-6xl mx-auto px-4 h-16 grid grid-cols-2 md:grid-cols-3 items-center">
             
@@ -28,13 +27,12 @@
             <!-- 2. 중앙: 홈 메뉴 -->
             <nav class="hidden md:flex items-center justify-center space-x-8 text-sm font-bold text-slate-700">
                 <button onclick="switchView('main')" class="hover:text-blue-600 transition">홈</button>
-                <button onclick="switchView('order')" class="hover:text-blue-600 transition">DB 구매신청</button>
+                <button onclick="switchView('order')" class="hover:text-blue-600 transition">DB 주문신청</button>
                 <button onclick="openDbAssign()" class="hover:text-blue-600 transition">고객정보관리</button>
             </nav>
 
-            <!-- 3. 우측 상단: 로그인 / 아이디 찾기 / 비밀번호 찾기 / 회원가입 (네모박스 및 안내문구 없음) -->
+            <!-- 3. 우측 상단: 로그인 / 아이디 찾기 / 비밀번호 찾기 / 회원가입 -->
             <div class="flex items-center justify-end">
-                <!-- 비로그인 상태 -->
                 <div id="loggedOutUI" class="flex items-center space-x-2 sm:space-x-2.5 text-xs">
                     <button onclick="openModal('loginModal')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3.5 py-1.5 rounded-lg transition">로그인</button>
                     <button onclick="openModal('findIdModal')" class="text-slate-600 hover:text-slate-900 hover:underline">아이디 찾기</button>
@@ -44,7 +42,6 @@
                     <button onclick="openModal('signupModal')" class="font-bold text-blue-600 hover:underline">회원가입</button>
                 </div>
 
-                <!-- 로그인 완료 상태 -->
                 <div id="loggedInUI" class="hidden flex items-center space-x-2.5 text-xs">
                     <span id="displayUserName" class="font-black text-slate-900"></span>
                     <span id="displayUserId" class="text-slate-400"></span>
@@ -62,22 +59,21 @@
     <!-- 메인 컨텐츠 -->
     <main class="flex-grow max-w-5xl w-full mx-auto px-4 py-12 flex flex-col justify-center">
 
-        <!-- [뷰 1: 메인 화면 - DB구매신청 & 고객정보관리 카드 중앙 배치] -->
+        <!-- [뷰 1: 메인 화면 - DB주문신청 & 고객정보관리 카드 중앙 배치] -->
         <div id="viewMain" class="space-y-10">
             
-            <!-- 중앙 정렬된 2대 핵심 카드 -->
             <div class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
                 
-                <!-- 1. DB 구매신청 -->
+                <!-- 1. DB 주문신청 -->
                 <div onclick="switchView('order')" class="bg-white hover:bg-slate-50 rounded-2xl p-8 border-2 border-slate-200 hover:border-blue-600 cursor-pointer transition shadow-sm flex flex-col justify-between min-h-[220px]">
                     <div>
                         <span class="text-xs font-extrabold text-blue-600 bg-blue-50 px-2.5 py-1 rounded">STEP 01</span>
-                        <h2 class="text-2xl font-black text-slate-900 mt-3">🛒 DB 구매신청</h2>
-                        <p class="text-xs text-slate-500 mt-2">7대 권역 및 복수 DB 상품 동시 주문</p>
+                        <h2 class="text-2xl font-black text-slate-900 mt-3">🛒 DB 주문신청</h2>
+                        <p class="text-xs text-slate-500 mt-2">총 주문수량 입력 및 7대 권역별 수량 배분</p>
                     </div>
                     <div class="mt-8 flex items-center justify-between pt-4 border-t border-slate-100">
-                        <span class="text-xs font-bold text-slate-400">회원시트 자동 반영</span>
-                        <span class="bg-blue-600 text-white font-bold px-4 py-2 rounded-lg text-xs">신청하기 →</span>
+                        <span class="text-xs font-bold text-slate-400">회원시트 지역수량 자동 반영</span>
+                        <span class="bg-blue-600 text-white font-bold px-4 py-2 rounded-lg text-xs">주문신청 →</span>
                     </div>
                 </div>
 
@@ -96,10 +92,10 @@
 
             </div>
 
-            <!-- 내 구매신청 내역 (로그인 시 중앙 하단에 표시) -->
+            <!-- 내 주문신청 내역 -->
             <div id="myOrderHistoryBox" class="hidden max-w-4xl mx-auto bg-white rounded-2xl border border-slate-200 p-6">
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-base font-black text-slate-900">나의 DB 구매신청 내역</h3>
+                    <h3 class="text-base font-black text-slate-900">나의 DB 주문신청 내역</h3>
                     <button onclick="loadMyOrders()" class="text-xs font-bold text-blue-600 hover:underline">새로고침 ↻</button>
                 </div>
                 <div class="overflow-x-auto">
@@ -109,8 +105,8 @@
                                 <th class="py-2.5 px-2">신청일시</th>
                                 <th class="py-2.5 px-2">주문번호</th>
                                 <th class="py-2.5 px-2">DB종류</th>
-                                <th class="py-2.5 px-2">희망지역</th>
-                                <th class="py-2.5 px-2">신청수량</th>
+                                <th class="py-2.5 px-2">지역별 배분수량</th>
+                                <th class="py-2.5 px-2">총 주문수량</th>
                                 <th class="py-2.5 px-2">결제금액</th>
                                 <th class="py-2.5 px-2">입금상태</th>
                             </tr>
@@ -124,14 +120,14 @@
 
         </div>
 
-        <!-- [뷰 2: DB 구매신청 화면] -->
+        <!-- [뷰 2: DB 주문신청 화면] -->
         <div id="viewOrder" class="hidden max-w-4xl mx-auto w-full">
             <div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-200">
-                <h2 class="text-xl sm:text-2xl font-black text-slate-900">DB 구매신청</h2>
+                <h2 class="text-xl sm:text-2xl font-black text-slate-900">DB 주문신청</h2>
                 <button onclick="switchView('main')" class="px-4 py-2 border border-slate-300 rounded-lg text-xs font-bold text-slate-700 hover:bg-slate-50">← 뒤로가기</button>
             </div>
 
-            <form onsubmit="submitDatumOrder(event)" class="space-y-6 bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm">
+            <form onsubmit="openRegionAllocModal(event)" class="space-y-6 bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1">설계사명 (이름)</label>
@@ -143,9 +139,9 @@
                     </div>
                 </div>
 
-                <!-- 복수 상품 선택 및 상품별 수량 지정 -->
+                <!-- 상품 선택 및 주문 수량 입력 -->
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-2">1. DB 상품 및 수량 선택 (복수 선택 가능)</label>
+                    <label class="block text-xs font-bold text-slate-700 mb-2">1. DB 상품 선택 및 주문 수량 입력 (복수 선택 가능)</label>
                     <div class="space-y-2.5">
                         <div class="border border-slate-300 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                             <label class="flex items-center space-x-3 cursor-pointer">
@@ -156,7 +152,7 @@
                                 </div>
                             </label>
                             <div class="flex items-center space-x-2">
-                                <span class="text-xs font-bold text-slate-500">신청수량:</span>
+                                <span class="text-xs font-bold text-slate-500">주문수량:</span>
                                 <input type="number" id="qty_item_1" min="1" value="10" oninput="calculateOrderTotal()" class="w-24 px-3 py-1.5 border border-slate-300 rounded-lg text-sm font-bold text-right">
                                 <span class="text-xs font-bold text-slate-600">건</span>
                             </div>
@@ -171,7 +167,7 @@
                                 </div>
                             </label>
                             <div class="flex items-center space-x-2">
-                                <span class="text-xs font-bold text-slate-500">신청수량:</span>
+                                <span class="text-xs font-bold text-slate-500">주문수량:</span>
                                 <input type="number" id="qty_item_2" min="1" value="10" oninput="calculateOrderTotal()" class="w-24 px-3 py-1.5 border border-slate-300 rounded-lg text-sm font-bold text-right">
                                 <span class="text-xs font-bold text-slate-600">건</span>
                             </div>
@@ -186,7 +182,7 @@
                                 </div>
                             </label>
                             <div class="flex items-center space-x-2">
-                                <span class="text-xs font-bold text-slate-500">신청수량:</span>
+                                <span class="text-xs font-bold text-slate-500">주문수량:</span>
                                 <input type="number" id="qty_item_3" min="1" value="10" oninput="calculateOrderTotal()" class="w-24 px-3 py-1.5 border border-slate-300 rounded-lg text-sm font-bold text-right">
                                 <span class="text-xs font-bold text-slate-600">건</span>
                             </div>
@@ -194,37 +190,145 @@
                     </div>
                 </div>
 
-                <!-- 7대 권역 선택 -->
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-2">2. 희망 지역 선택 (7대 권역 복수 선택 가능)</label>
-                    <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2 text-xs">
-                        <div><input type="checkbox" id="reg_1" value="수도권" class="hidden region-checkbox" checked><label for="reg_1" class="block text-center py-3 border border-slate-300 rounded-lg cursor-pointer" title="서울,인천,부천,경기도">수도권</label></div>
-                        <div><input type="checkbox" id="reg_2" value="부산경남" class="hidden region-checkbox"><label for="reg_2" class="block text-center py-3 border border-slate-300 rounded-lg cursor-pointer">부산경남</label></div>
-                        <div><input type="checkbox" id="reg_3" value="전라도" class="hidden region-checkbox"><label for="reg_3" class="block text-center py-3 border border-slate-300 rounded-lg cursor-pointer">전라도</label></div>
-                        <div><input type="checkbox" id="reg_4" value="충청도" class="hidden region-checkbox"><label for="reg_4" class="block text-center py-3 border border-slate-300 rounded-lg cursor-pointer">충청도</label></div>
-                        <div><input type="checkbox" id="reg_5" value="대구경북" class="hidden region-checkbox"><label for="reg_5" class="block text-center py-3 border border-slate-300 rounded-lg cursor-pointer">대구경북</label></div>
-                        <div><input type="checkbox" id="reg_6" value="강원도" class="hidden region-checkbox"><label for="reg_6" class="block text-center py-3 border border-slate-300 rounded-lg cursor-pointer">강원도</label></div>
-                        <div><input type="checkbox" id="reg_7" value="제주도" class="hidden region-checkbox"><label for="reg_7" class="block text-center py-3 border border-slate-300 rounded-lg cursor-pointer">제주도</label></div>
+                <!-- 총 주문수량 및 결제금액 요약 -->
+                <div class="bg-slate-50 p-5 rounded-xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                        <span id="orderSummaryText" class="text-xs font-bold text-slate-600 block">보장분석 퍼미션 DB(10건)</span>
+                        <span class="text-sm font-black text-slate-900 mt-1 block">총 주문수량: <span id="orderTotalQtyDisplay" class="text-blue-600">10</span>건</span>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-[11px] text-slate-400 block">총 결제 예정 금액</span>
+                        <span id="orderTotalPriceDisplay" class="text-2xl font-black text-blue-600">700,000원</span>
                     </div>
                 </div>
 
-                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex items-center justify-between">
-                    <span id="orderSummaryText" class="text-xs font-bold text-slate-600">보장분석 퍼미션 DB(10건)</span>
-                    <span id="orderTotalPriceDisplay" class="text-xl font-black text-blue-600">700,000원</span>
-                </div>
-
-                <button type="submit" id="orderSubmitBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl text-sm transition">
-                    구매신청 완료하기
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl text-sm transition shadow-sm">
+                    주문신청하기 (지역별 수량 입력 안내창 열기)
                 </button>
             </form>
         </div>
 
     </main>
 
+    <!-- ⭐️ 지역별 주문수량 배분 및 차감 안내창 (모달) -->
+    <div id="regionAllocModal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+            <button onclick="closeModal('regionAllocModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 font-bold text-lg">✕</button>
+            
+            <h3 class="text-lg font-black text-slate-900">지역별 주문수량 배분 안내</h3>
+            <p class="text-xs text-slate-500 mt-1">원하시는 지역에 신청 개수를 직접 입력해주세요. 남은 수량이 0건이 되면 주문확정이 가능합니다.</p>
+
+            <!-- 실시간 차감 카운트 박스 -->
+            <div class="mt-4 bg-slate-50 border border-slate-200 rounded-xl p-4 grid grid-cols-3 text-center divide-x divide-slate-200">
+                <div>
+                    <span class="text-[11px] text-slate-500 font-bold block">총 주문개수</span>
+                    <span id="modalTotalOrderQty" class="text-lg font-black text-slate-900 mt-0.5 block">10건</span>
+                </div>
+                <div>
+                    <span class="text-[11px] text-slate-500 font-bold block">입력한 개수</span>
+                    <span id="modalAllocatedQty" class="text-lg font-black text-blue-600 mt-0.5 block">0건</span>
+                </div>
+                <div>
+                    <span class="text-[11px] text-slate-500 font-bold block">남은 개수 (차감)</span>
+                    <span id="modalRemainingQty" class="text-lg font-black text-rose-600 mt-0.5 block">10건</span>
+                </div>
+            </div>
+
+            <!-- 7대 권역별 수량 직접 입력란 -->
+            <div class="mt-4 space-y-2 max-h-[45vh] overflow-y-auto pr-1 text-xs">
+                <div class="flex items-center justify-between py-2 px-3 border border-slate-200 rounded-lg">
+                    <div>
+                        <span class="font-bold text-slate-800 text-sm">수도권</span>
+                        <span class="text-[11px] text-slate-400 ml-1">(서울·인천·부천·경기)</span>
+                    </div>
+                    <div class="flex items-center space-x-1.5">
+                        <input type="number" min="0" value="0" data-region="수도권" oninput="updateRegionRemain()" class="region-qty-input w-20 px-2.5 py-1.5 border border-slate-300 rounded-lg text-right font-bold text-sm focus:border-blue-600 focus:outline-none">
+                        <span class="font-bold text-slate-600">건</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between py-2 px-3 border border-slate-200 rounded-lg">
+                    <div>
+                        <span class="font-bold text-slate-800 text-sm">부산경남</span>
+                        <span class="text-[11px] text-slate-400 ml-1">(부산·울산·경남)</span>
+                    </div>
+                    <div class="flex items-center space-x-1.5">
+                        <input type="number" min="0" value="0" data-region="부산경남" oninput="updateRegionRemain()" class="region-qty-input w-20 px-2.5 py-1.5 border border-slate-300 rounded-lg text-right font-bold text-sm focus:border-blue-600 focus:outline-none">
+                        <span class="font-bold text-slate-600">건</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between py-2 px-3 border border-slate-200 rounded-lg">
+                    <div>
+                        <span class="font-bold text-slate-800 text-sm">전라도</span>
+                        <span class="text-[11px] text-slate-400 ml-1">(광주·전남·전북)</span>
+                    </div>
+                    <div class="flex items-center space-x-1.5">
+                        <input type="number" min="0" value="0" data-region="전라도" oninput="updateRegionRemain()" class="region-qty-input w-20 px-2.5 py-1.5 border border-slate-300 rounded-lg text-right font-bold text-sm focus:border-blue-600 focus:outline-none">
+                        <span class="font-bold text-slate-600">건</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between py-2 px-3 border border-slate-200 rounded-lg">
+                    <div>
+                        <span class="font-bold text-slate-800 text-sm">충청도</span>
+                        <span class="text-[11px] text-slate-400 ml-1">(대전·세종·충남·충북)</span>
+                    </div>
+                    <div class="flex items-center space-x-1.5">
+                        <input type="number" min="0" value="0" data-region="충청도" oninput="updateRegionRemain()" class="region-qty-input w-20 px-2.5 py-1.5 border border-slate-300 rounded-lg text-right font-bold text-sm focus:border-blue-600 focus:outline-none">
+                        <span class="font-bold text-slate-600">건</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between py-2 px-3 border border-slate-200 rounded-lg">
+                    <div>
+                        <span class="font-bold text-slate-800 text-sm">대구경북</span>
+                        <span class="text-[11px] text-slate-400 ml-1">(대구·경북)</span>
+                    </div>
+                    <div class="flex items-center space-x-1.5">
+                        <input type="number" min="0" value="0" data-region="대구경북" oninput="updateRegionRemain()" class="region-qty-input w-20 px-2.5 py-1.5 border border-slate-300 rounded-lg text-right font-bold text-sm focus:border-blue-600 focus:outline-none">
+                        <span class="font-bold text-slate-600">건</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between py-2 px-3 border border-slate-200 rounded-lg">
+                    <div>
+                        <span class="font-bold text-slate-800 text-sm">강원도</span>
+                    </div>
+                    <div class="flex items-center space-x-1.5">
+                        <input type="number" min="0" value="0" data-region="강원도" oninput="updateRegionRemain()" class="region-qty-input w-20 px-2.5 py-1.5 border border-slate-300 rounded-lg text-right font-bold text-sm focus:border-blue-600 focus:outline-none">
+                        <span class="font-bold text-slate-600">건</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between py-2 px-3 border border-slate-200 rounded-lg">
+                    <div>
+                        <span class="font-bold text-slate-800 text-sm">제주도</span>
+                    </div>
+                    <div class="flex items-center space-x-1.5">
+                        <input type="number" min="0" value="0" data-region="제주도" oninput="updateRegionRemain()" class="region-qty-input w-20 px-2.5 py-1.5 border border-slate-300 rounded-lg text-right font-bold text-sm focus:border-blue-600 focus:outline-none">
+                        <span class="font-bold text-slate-600">건</span>
+                    </div>
+                </div>
+            </div>
+
+            <p id="regionAllocHelpText" class="text-[11px] font-bold text-rose-600 text-center mt-3">
+                남은 개수가 0건이 되도록 지역별 수량을 입력해주세요.
+            </p>
+
+            <div class="mt-4 flex gap-2">
+                <button type="button" onclick="closeModal('regionAllocModal')" class="w-1/3 py-3 border border-slate-300 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50">취소</button>
+                <button type="button" id="confirmOrderFinalBtn" onclick="confirmFinalDatumOrder()" class="w-2/3 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-black shadow-md transition">
+                    ✅ 주문확정
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- 모바일 하단 고정 탭 -->
     <div class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-40 grid grid-cols-3 text-center py-2.5 text-xs font-bold">
         <button onclick="switchView('main')" class="text-slate-700">홈</button>
-        <button onclick="switchView('order')" class="text-blue-600">DB구매신청</button>
+        <button onclick="switchView('order')" class="text-blue-600">DB주문신청</button>
         <button onclick="openDbAssign()" class="text-slate-900">고객정보관리</button>
     </div>
 
@@ -234,7 +338,7 @@
         <p class="mt-1">© 2026 Haesong Holdings. All rights reserved.</p>
     </footer>
 
-    <!-- 1. 로그인 모달 (아이디 기준 로그인) -->
+    <!-- 1. 로그인 모달 -->
     <div id="loginModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl relative">
             <button onclick="closeModal('loginModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 font-bold">✕</button>
@@ -282,7 +386,7 @@
         </div>
     </div>
 
-    <!-- 4. 회원가입 모달 (직책 포함) -->
+    <!-- 4. 회원가입 모달 -->
     <div id="signupModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl relative">
             <button onclick="closeModal('signupModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 font-bold">✕</button>
@@ -351,6 +455,7 @@
         const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxM8jHtjpXz91t6X-l54CNSoPKAVMuvpoqb3_V5V71X3r7Cx8Ah3OVvyW_fWpCc3T62vg/exec";
 
         let currentUser = { isLoggedIn: false, userId: '', name: '', position: '', phone: '', status: '' };
+        let pendingOrderData = null; // 지역 배분 모달용 임시 주문 데이터
 
         function switchView(viewName) {
             document.getElementById('viewMain').classList.toggle('hidden', viewName !== 'main');
@@ -365,30 +470,35 @@
         function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
+        // 1단계: 주문 수량 및 금액 계산
         function calculateOrderTotal() {
             const checks = document.querySelectorAll('.db-item-check:checked');
             let summaryParts = [];
             let totalPrice = 0;
+            let totalQty = 0;
 
             checks.forEach(chk => {
                 const unitPrice = parseInt(chk.getAttribute('data-price'), 10);
                 const qtyId = chk.getAttribute('data-qty-id');
                 const qty = Math.max(1, parseInt(document.getElementById(qtyId).value, 10) || 0);
                 summaryParts.push(`${chk.value}(${qty}건)`);
+                totalQty += qty;
                 totalPrice += unitPrice * qty;
             });
 
             document.getElementById('orderSummaryText').innerText = summaryParts.length > 0 ? summaryParts.join(" + ") : "선택된 상품 없음";
+            document.getElementById('orderTotalQtyDisplay').innerText = totalQty;
             document.getElementById('orderTotalPriceDisplay').innerText = totalPrice.toLocaleString() + "원";
         }
 
-        async function submitDatumOrder(e) {
+        // ⭐️ 2단계: [주문신청하기] 클릭 시 지역별 수량 배분 안내창 오픈
+        function openRegionAllocModal(e) {
             e.preventDefault();
             const checks = document.querySelectorAll('.db-item-check:checked');
-            if (checks.length === 0) { alert("DB 상품을 최소 1개 이상 선택해주세요."); return; }
-
-            const checkedRegions = Array.from(document.querySelectorAll('.region-checkbox:checked')).map(cb => cb.value);
-            if (checkedRegions.length === 0) { alert("희망 지역을 1개 이상 선택해주세요."); return; }
+            if (checks.length === 0) {
+                alert("주문하실 DB 상품을 최소 1개 이상 선택해주세요.");
+                return;
+            }
 
             const items = [];
             let totalPrice = 0;
@@ -407,31 +517,113 @@
                 totalPrice += unitPrice * qty;
             });
 
-            const btn = document.getElementById('orderSubmitBtn');
-            btn.disabled = true; btn.innerText = "처리 중...";
+            pendingOrderData = {
+                agentName: document.getElementById('orderAgentName').value.trim(),
+                phone: document.getElementById('orderAgentPhone').value.trim(),
+                items: items,
+                totalQty: totalQty,
+                totalPrice: totalPrice
+            };
+
+            // 모달 내 지역 입력값 0으로 초기화
+            document.querySelectorAll('.region-qty-input').forEach(inp => { inp.value = 0; });
+            updateRegionRemain();
+            openModal('regionAllocModal');
+        }
+
+        // ⭐️ 3단계: 안내창에서 지역별 신청 개수 입력 시 총 주문개수에서 실시간 차감 계산
+        function updateRegionRemain() {
+            if (!pendingOrderData) return;
+            const totalOrderQty = pendingOrderData.totalQty;
+            let allocatedSum = 0;
+
+            document.querySelectorAll('.region-qty-input').forEach(inp => {
+                const val = parseInt(inp.value, 10);
+                if (!isNaN(val) && val > 0) {
+                    allocatedSum += val;
+                }
+            });
+
+            const remaining = totalOrderQty - allocatedSum;
+
+            document.getElementById('modalTotalOrderQty').innerText = `${totalOrderQty}건`;
+            document.getElementById('modalAllocatedQty').innerText = `${allocatedSum}건`;
+            
+            const remainEl = document.getElementById('modalRemainingQty');
+            const helpEl = document.getElementById('regionAllocHelpText');
+
+            remainEl.innerText = `${remaining}건`;
+
+            if (remaining === 0) {
+                remainEl.className = "text-lg font-black text-emerald-600 mt-0.5 block";
+                helpEl.className = "text-[11px] font-bold text-emerald-600 text-center mt-3";
+                helpEl.innerText = "✔ 모든 수량이 정확히 배분되었습니다. [주문확정] 버튼을 눌러주세요.";
+            } else if (remaining > 0) {
+                remainEl.className = "text-lg font-black text-rose-600 mt-0.5 block";
+                helpEl.className = "text-[11px] font-bold text-rose-600 text-center mt-3";
+                helpEl.innerText = `남은 개수 ${remaining}건을 지역에 마저 입력해주세요.`;
+            } else {
+                remainEl.className = "text-lg font-black text-rose-600 mt-0.5 block";
+                helpEl.className = "text-[11px] font-bold text-rose-600 text-center mt-3";
+                helpEl.innerText = `총 주문개수보다 ${Math.abs(remaining)}건 초과 입력되었습니다. 수량을 조정해주세요.`;
+            }
+        }
+
+        // ⭐️ 4단계: [주문확정] 버튼 클릭 시 회원관리 시트 지역 열(P~V열) 및 주문신청 시트에 자동 기입
+        async function confirmFinalDatumOrder() {
+            if (!pendingOrderData) return;
+
+            let allocatedSum = 0;
+            const regionQuantities = {};
+            const selectedRegionSummary = [];
+
+            document.querySelectorAll('.region-qty-input').forEach(inp => {
+                const rName = inp.getAttribute('data-region');
+                const val = Math.max(0, parseInt(inp.value, 10) || 0);
+                regionQuantities[rName] = val;
+                if (val > 0) {
+                    allocatedSum += val;
+                    selectedRegionSummary.push(`${rName}(${val}건)`);
+                }
+            });
+
+            const remaining = pendingOrderData.totalQty - allocatedSum;
+            if (remaining !== 0) {
+                alert(`남은 개수가 0건이 되어야 주문확정이 가능합니다.\n(현재 남은 개수: ${remaining}건)`);
+                return;
+            }
+
+            const btn = document.getElementById('confirmOrderFinalBtn');
+            btn.disabled = true;
+            btn.innerText = "⏳ 주문확정 및 시트 반영 중...";
 
             try {
                 const res = await fetch(GAS_WEBAPP_URL, {
                     method: 'POST',
                     body: JSON.stringify({
                         action: "submitDbOrder",
-                        agentName: document.getElementById('orderAgentName').value.trim(),
-                        phone: document.getElementById('orderAgentPhone').value.trim(),
-                        items: items,
-                        regions: checkedRegions,
-                        quantity: totalQty,
-                        totalPrice: totalPrice
+                        userId: currentUser.userId || "",
+                        agentName: pendingOrderData.agentName,
+                        phone: pendingOrderData.phone,
+                        items: pendingOrderData.items,
+                        regions: selectedRegionSummary,
+                        regionQuantities: regionQuantities,
+                        quantity: pendingOrderData.totalQty,
+                        totalPrice: pendingOrderData.totalPrice
                     })
                 });
                 const result = await res.json();
-                alert(result.message || "신청이 완료되었습니다.");
+                alert(result.message || "주문확정이 완료되어 회원관리 시트에 지역별 수량이 자동 입력되었습니다.");
+                closeModal('regionAllocModal');
                 switchView('main');
                 if (currentUser.isLoggedIn) loadMyOrders();
             } catch (err) {
-                alert("구매신청이 접수되었습니다.");
+                alert("주문확정이 접수되었습니다.");
+                closeModal('regionAllocModal');
                 switchView('main');
             } finally {
-                btn.disabled = false; btn.innerText = "구매신청 완료하기";
+                btn.disabled = false;
+                btn.innerText = "✅ 주문확정";
             }
         }
 
@@ -454,7 +646,7 @@
                 const list = await res.json();
                 const tbody = document.getElementById('myOrderTableBody');
                 if (!list || list.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="7" class="py-6 text-slate-400">신청 내역이 없습니다.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="7" class="py-6 text-slate-400">주문신청 내역이 없습니다.</td></tr>`;
                     return;
                 }
                 tbody.innerHTML = list.map(item => `
