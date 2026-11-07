@@ -670,7 +670,8 @@
             } catch (e) {}
         }
 
-        async function submitLogin() {
+        // ⭐️ 데이텀 index.html <script> 내부: 중복로그인 확인 + 30초 세션체크 + 29분 자동로그아웃 엔진
+        async function submitLogin(forceLogin = false) {
             const userId = document.getElementById('loginId').value.trim();
             const password = document.getElementById('loginPw').value.trim();
             if (!userId || !password) { alert("아이디와 비밀번호를 모두 입력해주세요."); return; }
@@ -682,7 +683,7 @@
                 const res = await fetch(USER_DB_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action: "login", userId, password })
+                    body: JSON.stringify({ action: "login", userId, password, force: forceLogin })
                 });
                 const data = await res.json();
                 if (data.success) {
@@ -692,6 +693,8 @@
                     };
                     localStorage.setItem('rion_logged_user', data.name);
                     localStorage.setItem('datum_logged_id', data.userId);
+                    if (data.sessionId) localStorage.setItem('datum_session_id', data.sessionId);
+                    localStorage.setItem('datum_last_activity', Date.now().toString());
 
                     document.getElementById('loggedOutUI').classList.add('hidden');
                     document.getElementById('loggedInUI').classList.remove('hidden');
@@ -701,7 +704,6 @@
 
                     document.getElementById('orderAgentName').value = data.name;
                     document.getElementById('orderAgentPhone').value = data.phone || '';
-
                     document.getElementById('myOrderHistoryBox').classList.remove('hidden');
 
                     document.getElementById('editPosition').value = data.position || '';
@@ -711,7 +713,13 @@
                     document.getElementById('editEmail').value = data.email || '';
 
                     closeModal('loginModal');
+                    startSessionCheck();
                     loadMyOrders();
+                } else if (data.alreadyLoggedIn) {
+                    btn.disabled = false; btn.innerText = "로그인";
+                    if (confirm("기존 로그인을 로그아웃 하시겠습니까?\n확인을 누르시면 기존 기기에서 자동 로그아웃됩니다.")) {
+                        submitLogin(true);
+                    }
                 } else {
                     alert(data.message);
                 }
@@ -722,123 +730,148 @@
             }
         }
 
-        async function submitFindId() {
-            const name = document.getElementById('findIdName').value.trim();
-            const phone = document.getElementById('findIdPhone').value.trim();
-            if (!name || !phone) { alert("이름과 전화번호를 모두 입력해주세요."); return; }
-
-            const btn = document.getElementById('findIdBtn');
-            btn.disabled = true; btn.innerText = "발송 중...";
-
-            try {
-                const res = await fetch(USER_DB_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action: "findId", name, phone })
-                });
-                const data = await res.json();
-                alert(data.message);
-                if (data.success) closeModal('findIdModal');
-            } catch (e) {
-                alert("통신 오류가 발생했습니다.");
-            } finally {
-                btn.disabled = false; btn.innerText = "이메일로 아이디 받기";
-            }
-        }
-
-        async function submitFindPassword() {
-            const name = document.getElementById('findPwName').value.trim();
-            const phone = document.getElementById('findPwPhone').value.trim();
-            if (!name || !phone) { alert("이름과 전화번호를 모두 입력해주세요."); return; }
-
-            const btn = document.getElementById('findPwBtn');
-            btn.disabled = true; btn.innerText = "발송 중...";
-
-            try {
-                const res = await fetch(USER_DB_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action: "findPassword", name, phone })
-                });
-                const data = await res.json();
-                alert(data.message);
-                if (data.success) closeModal('findPwModal');
-            } catch (e) {
-                alert("통신 오류가 발생했습니다.");
-            } finally {
-                btn.disabled = false; btn.innerText = "이메일로 임시비밀번호 받기";
-            }
-        }
-
-        async function submitSignup() {
-            const payload = {
-                action: "signup",
-                userId: document.getElementById('regUserId').value.trim(),
-                name: document.getElementById('regName').value.trim(),
-                position: document.getElementById('regPosition').value.trim(),
-                company: document.getElementById('regCompany').value.trim(),
-                branch: document.getElementById('regBranch').value.trim(),
-                password: document.getElementById('regPassword').value.trim(),
-                phone: document.getElementById('regPhone').value.trim(),
-                email: document.getElementById('regEmail').value.trim()
-            };
-            if (!payload.userId || !payload.name || !payload.password || !payload.phone || !payload.email) {
-                alert("아이디, 이름, 비밀번호, 전화번호, 이메일을 모두 입력해주세요."); return;
-            }
-            const btn = document.getElementById('signupSubmitBtn');
-            btn.disabled = true; btn.innerText = "처리 중...";
-
-            try {
-                const res = await fetch(USER_DB_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify(payload)
-                });
-                const data = await res.json();
-                alert(data.message);
-                if (data.success) closeModal('signupModal');
-            } catch (e) {
-                alert("통신 오류가 발생했습니다.");
-            } finally {
-                btn.disabled = false; btn.innerText = "가입 신청하기";
-            }
-        }
-
-        async function submitUpdateProfile() {
-            const payload = {
-                action: "updateProfile",
-                userId: currentUser.userId,
-                position: document.getElementById('editPosition').value.trim(),
-                company: document.getElementById('editCompany').value.trim(),
-                branch: document.getElementById('editBranch').value.trim(),
-                password: document.getElementById('editPassword').value.trim(),
-                phone: document.getElementById('editPhone').value.trim(),
-                email: document.getElementById('editEmail').value.trim()
-            };
-            try {
-                const res = await fetch(USER_DB_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify(payload)
-                });
-                const data = await res.json();
-                alert(data.message);
-                if (data.success) closeModal('memberInfoModal');
-            } catch (e) {
-                alert("통신 오류가 발생했습니다.");
-            }
-        }
-
         function logoutUser() {
+            if (currentUser && currentUser.userId) {
+                fetch(USER_DB_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: "logout", userId: currentUser.userId })
+                }).catch(() => {});
+            }
+            if (sessionCheckTimer) clearInterval(sessionCheckTimer);
             currentUser = { isLoggedIn: false, userId: '', name: '', position: '', phone: '', status: '' };
             localStorage.removeItem('rion_logged_user');
             localStorage.removeItem('datum_logged_id');
+            localStorage.removeItem('datum_session_id');
+            localStorage.removeItem('datum_last_activity');
             document.getElementById('orderAgentName').value = '';
             document.getElementById('orderAgentPhone').value = '';
             document.getElementById('loggedOutUI').classList.remove('hidden');
             document.getElementById('loggedInUI').classList.add('hidden');
             document.getElementById('myOrderHistoryBox').classList.add('hidden');
+            alert('로그아웃 되었습니다.');
         }
+
+        let sessionCheckTimer = null;
+        function startSessionCheck() {
+            if (sessionCheckTimer) clearInterval(sessionCheckTimer);
+            sessionCheckTimer = setInterval(async () => {
+                if (!currentUser.isLoggedIn) return;
+                const currentSession = localStorage.getItem('datum_session_id');
+                if (!currentSession) return;
+                try {
+                    const res = await fetch(USER_DB_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify({ action: "checkSession", userId: currentUser.userId, sessionId: currentSession })
+                    });
+                    const data = await res.json();
+                    if (data.sessionExpired) {
+                        clearInterval(sessionCheckTimer);
+                        alert("다른 기기에서 로그인이 발생하여 자동으로 로그아웃 되었습니다.");
+                        logoutUser();
+                    }
+                } catch (e) {}
+            }, 30000);
+        }
+
+        let idleTimer = null;
+        let countdownTimer = null;
+        function initSecurityEngine() {
+            const IDLE_TIMEOUT = 29 * 60 * 1000;
+            const COUNTDOWN_TIME = 60;
+
+            function startIdleTimer() {
+                clearTimeout(idleTimer);
+                clearInterval(countdownTimer);
+                if (localStorage.getItem('datum_logged_id')) {
+                    idleTimer = setTimeout(() => {
+                        const lastActivity = parseInt(localStorage.getItem('datum_last_activity') || '0', 10);
+                        if (Date.now() - lastActivity < IDLE_TIMEOUT) {
+                            startIdleTimer();
+                        } else {
+                            showWarningModal(COUNTDOWN_TIME);
+                        }
+                    }, IDLE_TIMEOUT);
+                }
+            }
+
+            function showWarningModal(seconds) {
+                const modal = document.getElementById('sessionWarningModal');
+                const countEl = document.getElementById('logoutCountdown');
+                if (!modal || !countEl) return;
+                modal.classList.remove('hidden');
+                let timeLeft = seconds;
+                countEl.innerText = timeLeft;
+
+                countdownTimer = setInterval(() => {
+                    timeLeft -= 1;
+                    countEl.innerText = timeLeft;
+                    const lastActivity = parseInt(localStorage.getItem('datum_last_activity') || '0', 10);
+                    if (Date.now() - lastActivity < 5000) {
+                        clearInterval(countdownTimer);
+                        modal.classList.add('hidden');
+                        startIdleTimer();
+                        return;
+                    }
+                    if (timeLeft <= 0) {
+                        clearInterval(countdownTimer);
+                        modal.classList.add('hidden');
+                        logoutUser();
+                    }
+                }, 1000);
+            }
+
+            function resetOnActivity() {
+                const modal = document.getElementById('sessionWarningModal');
+                if (modal && modal.classList.contains('hidden')) {
+                    localStorage.setItem('datum_last_activity', Date.now().toString());
+                    startIdleTimer();
+                }
+            }
+
+            ['mousemove', 'mousedown', 'keypress', 'scroll', 'touchstart'].forEach(evt => {
+                document.addEventListener(evt, resetOnActivity, true);
+            });
+
+            window.addEventListener('beforeunload', function () {
+                const loggedId = localStorage.getItem('datum_logged_id');
+                if (loggedId) {
+                    navigator.sendBeacon(USER_DB_URL, JSON.stringify({ action: "logout", userId: loggedId }));
+                }
+            });
+
+            window.extendSession = function() {
+                clearInterval(countdownTimer);
+                document.getElementById('sessionWarningModal').classList.add('hidden');
+                localStorage.setItem('datum_last_activity', Date.now().toString());
+                startIdleTimer();
+            };
+
+            window.executeLogoutNow = function() {
+                clearInterval(countdownTimer);
+                document.getElementById('sessionWarningModal').classList.add('hidden');
+                logoutUser();
+            };
+
+            localStorage.setItem('datum_last_activity', Date.now().toString());
+            startIdleTimer();
+        }
+        document.addEventListener('DOMContentLoaded', initSecurityEngine);
     </script>
+<!-- ⏳ 데이텀 index.html에 추가할 세션 연장 경고 모달 (잇츠리온 동일) -->
+    <div id="sessionWarningModal" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl relative text-center">
+            <div class="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center mx-auto text-3xl mb-4 animate-bounce">⏳</div>
+            <h3 class="text-xl font-bold text-slate-900 mb-2">자동 로그아웃 안내</h3>
+            <p class="text-sm text-slate-600 mb-5 leading-relaxed">
+                오랜 시간 활동이 없어 <span id="logoutCountdown" class="font-bold text-rose-600 text-lg">60</span>초 후<br>자동으로 로그아웃됩니다.
+            </p>
+            <div class="flex gap-2">
+                <button onclick="extendSession()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg text-sm transition shadow-md">로그인 연장</button>
+                <button onclick="executeLogoutNow()" class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-3 rounded-lg text-sm transition">즉시 로그아웃</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
