@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>데이텀(DATUM) - 배정 DB 관리</title>
+    <title>데이텀(DATUM) - 배정 DB 및 AS 관리</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
@@ -18,7 +18,7 @@
     <header class="bg-white border-b border-slate-200 p-4 sticky top-0 z-40 flex justify-between items-center">
         <div class="flex items-center space-x-2">
             <div class="w-7 h-7 rounded bg-blue-600 text-white font-black flex items-center justify-center text-sm">D</div>
-            <h1 class="text-base xl:text-lg font-black text-slate-900">나의 배정 DB 리스트</h1>
+            <h1 class="text-base xl:text-lg font-black text-slate-900">나의 배정 DB 리스트 (유효기간 30일)</h1>
         </div>
         <div class="flex items-center gap-2">
             <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
@@ -35,7 +35,7 @@
     <!-- 우측 하단 저장 버튼 -->
     <div class="fixed bottom-6 right-6 z-50">
         <button id="globalSaveBtn" onclick="saveAllChanges()" class="bg-blue-600 hover:bg-blue-700 text-white font-black py-3.5 px-7 rounded-full shadow-lg transition flex items-center gap-2">
-            <span id="globalSaveText" class="text-sm">💾 변경사항 저장</span>
+            <span id="globalSaveText" class="text-sm">💾 변경사항 및 AS신청 저장</span>
         </button>
     </div>
 
@@ -43,6 +43,7 @@
         const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxM8jHtjpXz91t6X-l54CNSoPKAVMuvpoqb3_V5V71X3r7Cx8Ah3OVvyW_fWpCc3T62vg/exec"; 
         const currentAgent = localStorage.getItem('rion_logged_user');
         let modifiedRows = new Set();
+        let currentDBList = [];
 
         if (!currentAgent) {
             alert('메인 홈페이지에서 로그인을 먼저 진행해주세요.');
@@ -57,24 +58,22 @@
             try {
                 const response = await fetch(`${GAS_WEBAPP_URL}?agent=${encodeURIComponent(currentAgent)}`);
                 const data = await response.json();
-                renderDBList(data);
+                currentDBList = data || [];
+                renderDBList(currentDBList);
             } catch (error) {
                 document.getElementById('dbContainer').innerHTML = `<div class="text-center py-20 text-rose-500 font-bold">데이터 로드 오류</div>`;
             }
         }
 
-        function generateStatusSelect(id, val, index) {
+        function generateAsReasonSelect(id, val, index) {
             return `
                 <select id="${id}" onchange="markModified(${index})" class="w-full p-2 border border-slate-300 rounded-lg text-xs font-bold text-slate-800 bg-white focus:border-blue-600 focus:outline-none">
-                    <option value="" ${val===''?'selected':''}>- 현황 선택 -</option>
-                    <option value="부재" ${val==='부재'?'selected':''}>부재</option>
-                    <option value="재통화예정" ${val==='재통화예정'?'selected':''}>재통화예정</option>
-                    <option value="방문예정" ${val==='방문예정'?'selected':''}>방문예정</option>
-                    <option value="상담진행" ${val==='상담진행'?'selected':''}>상담진행</option>
-                    <option value="계약완료" ${val==='계약완료'?'selected':''}>계약완료</option>
-                    <option value="거절" ${val==='거절'?'selected':''}>거절 (회수)</option>
-                    <option value="결번/불량" ${val==='결번/불량'?'selected':''}>결번/불량 (A/S)</option>
-                    <option value="본인설계사" ${val==='본인설계사'?'selected':''}>본인설계사 (A/S)</option>
+                    <option value="" ${val===''?'selected':''}>- 정상진행 (AS신청 시 사유선택) -</option>
+                    <option value="결번/없는번호" ${val==='결번/없는번호'?'selected':''}>AS신청: 결번/없는번호</option>
+                    <option value="신청자본인아님" ${val==='신청자본인아님'?'selected':''}>AS신청: 신청자 본인 아님</option>
+                    <option value="설계사/동종업계" ${val==='설계사/동종업계'?'selected':''}>AS신청: 설계사/동종업계</option>
+                    <option value="장기부재" ${val==='장기부재'?'selected':''}>AS신청: 장기부재</option>
+                    <option value="초기거절/불량" ${val==='초기거절/불량'?'selected':''}>AS신청: 초기거절/불량</option>
                 </select>
             `;
         }
@@ -90,8 +89,11 @@
             let mobileHtml = '';
 
             dbs.forEach((db, index) => {
-                const valStatus = db.status || '';
+                const valAsReason = db.asReason || '';
                 const valNote = db.note || '';
+                const approvalBadge = db.asApproval
+                    ? `<span class="px-2 py-0.5 rounded text-[11px] font-bold ${db.asApproval==='승인'?'bg-emerald-100 text-emerald-700':(db.asApproval==='반려'?'bg-rose-100 text-rose-700':'bg-amber-100 text-amber-700')}">AS ${db.asApproval}</span>`
+                    : `<span class="text-slate-400 text-[11px]">정상</span>`;
 
                 // 1. PC 뷰
                 desktopHtml += `
@@ -104,24 +106,31 @@
                         <td class="p-2.5 border-r border-slate-200">${db.sido || ''} ${db.gugun || ''} ${db.dong || ''}</td>
                         <td class="p-2.5 border-r border-slate-200">${db.birth || '-'} / ${db.gender || '-'}</td>
                         <td class="p-2.5 border-r border-slate-200 text-left whitespace-normal text-[11px]">${db.memo || '-'}</td>
-                        <td class="p-2.5 border-r border-slate-200 text-[11px]">${db.assignDateTime || '-'}</td>
-                        <td class="p-2.5 text-rose-600 font-bold text-[11px]">${db.timeLimit || '-'}</td>
+                        <td class="p-2.5 border-r border-slate-200">${approvalBadge}</td>
+                        <td class="p-2.5 text-blue-600 font-bold text-[11px]">${db.timeLimit || '30일'}</td>
                     </tr>
-                    <tr class="border-b-2 border-slate-300 bg-slate-50/60">
+                    <tr class="border-b-2 border-slate-300 bg-slate-50/70">
                         <td colspan="10" class="p-2">
-                            <input type="hidden" id="custName_${index}" value="${db.customerName}">
-                            <div id="edit_area_${index}" class="flex items-center gap-3 p-1.5 rounded-lg">
-                                <div class="w-[30%] flex items-center gap-2">
+                            <div id="edit_area_${index}" class="flex items-center gap-2.5 p-1.5 rounded-lg">
+                                <!-- 배정 녹취 듣기 -->
+                                <div class="w-[24%] flex items-center gap-1.5">
                                     <span class="text-xs font-bold text-slate-700 shrink-0">🎧 녹취</span>
                                     <div class="flex-grow relative overflow-hidden h-10 rounded border border-slate-300 bg-[#141414]">
                                         ${db.audioUrl ? `<iframe src="${db.audioUrl.replace('uc?export=download&id=', 'file/d/')}/preview" style="position: absolute; top: -20px; left: 0; width: 100%; height: 150px; border: none;" allow="autoplay"></iframe><div class="absolute top-0 right-0 w-[45px] h-full bg-[#141414] z-10"></div>` : `<div class="w-full h-full flex items-center justify-center bg-slate-100 text-[11px] text-slate-400">녹취 없음</div>`}
                                     </div>
                                 </div>
+                                <!-- AS 사유 선택 -->
                                 <div class="w-[20%]">
-                                    ${generateStatusSelect(`status_${index}`, valStatus, index)}
+                                    ${generateAsReasonSelect(`asReason_${index}`, valAsReason, index)}
                                 </div>
-                                <div class="w-[50%]">
-                                    <input type="text" id="note_${index}" value="${valNote}" onchange="markModified(${index})" placeholder="비고 (상담 메모 입력)" class="w-full p-2 border border-slate-300 rounded-lg text-xs bg-white focus:border-blue-600 focus:outline-none">
+                                <!-- 신청 근거 및 메모 -->
+                                <div class="w-[32%]">
+                                    <input type="text" id="note_${index}" value="${valNote}" onchange="markModified(${index})" placeholder="상담메모 또는 AS 신청 근거 입력" class="w-full p-2 border border-slate-300 rounded-lg text-xs bg-white focus:border-blue-600 focus:outline-none">
+                                </div>
+                                <!-- AS 증빙파일(녹취/이미지) 업로드 -->
+                                <div class="w-[24%] flex items-center gap-1.5">
+                                    <input type="file" id="asFile_${index}" accept="audio/*,image/*,.mp3,.m4a,.wav,.jpg,.png,.pdf" onchange="markModified(${index})" class="text-[11px] text-slate-600 file:mr-2 file:py-1.5 file:px-2.5 file:rounded-lg file:border-0 file:text-[11px] file:font-bold file:bg-slate-200 file:text-slate-800 hover:file:bg-slate-300">
+                                    ${db.asFileUrl ? `<a href="${db.asFileUrl}" target="_blank" class="text-[11px] font-bold text-blue-600 underline shrink-0">첨부확인</a>` : ''}
                                 </div>
                             </div>
                         </td>
@@ -131,14 +140,16 @@
                 // 2. 모바일 뷰
                 mobileHtml += `
                     <div id="m_edit_area_${index}" class="bg-white rounded-xl border border-slate-200 p-4 mb-3 shadow-sm">
-                        <input type="hidden" id="m_custName_${index}" value="${db.customerName}">
                         <div class="flex justify-between items-center pb-2.5 mb-2.5 border-b border-slate-100">
                             <div>
                                 <span class="text-xs font-bold text-slate-400 mr-1">#${index + 1}</span>
                                 <span class="font-black text-base text-slate-900">${db.customerName || '-'}</span>
                                 <span class="ml-1 text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded font-bold">${db.region || '-'}</span>
                             </div>
-                            <span class="text-rose-600 font-bold text-xs">${db.timeLimit || '-'}</span>
+                            <div class="flex items-center gap-1.5">
+                                ${approvalBadge}
+                                <span class="text-blue-600 font-bold text-[11px]">${db.timeLimit || '30일'}</span>
+                            </div>
                         </div>
                         <div class="grid grid-cols-2 gap-2 text-xs mb-3 bg-slate-50 p-2.5 rounded-lg">
                             <div><span class="text-slate-400 block text-[10px]">연락처</span><a href="tel:${db.phone}" class="font-bold text-blue-600 underline">${db.phone || '-'}</a></div>
@@ -153,8 +164,12 @@
                                     ${db.audioUrl ? `<iframe src="${db.audioUrl.replace('uc?export=download&id=', 'file/d/')}/preview" style="position: absolute; top: -20px; left: 0; width: 100%; height: 150px; border: none;" allow="autoplay"></iframe><div class="absolute top-0 right-0 w-[45px] h-full bg-[#141414] z-10"></div>` : `<div class="w-full h-full flex items-center justify-center bg-slate-100 text-[11px] text-slate-400">녹취 없음</div>`}
                                 </div>
                             </div>
-                            ${generateStatusSelect(`m_status_${index}`, valStatus, index)}
-                            <input type="text" id="m_note_${index}" value="${valNote}" onchange="markModified(${index})" placeholder="비고 (상담 메모 입력)" class="w-full p-2 border border-slate-300 rounded-lg text-xs bg-white">
+                            ${generateAsReasonSelect(`m_asReason_${index}`, valAsReason, index)}
+                            <input type="text" id="m_note_${index}" value="${valNote}" onchange="markModified(${index})" placeholder="상담메모 또는 AS 신청 근거 입력" class="w-full p-2 border border-slate-300 rounded-lg text-xs bg-white">
+                            <div class="flex items-center justify-between pt-1">
+                                <input type="file" id="m_asFile_${index}" accept="audio/*,image/*,.mp3,.m4a,.wav,.jpg,.png,.pdf" onchange="markModified(${index})" class="text-[11px] text-slate-600 file:mr-2 file:py-1.5 file:px-2.5 file:rounded-lg file:border-0 file:text-[11px] file:font-bold file:bg-slate-200 file:text-slate-800">
+                                ${db.asFileUrl ? `<a href="${db.asFileUrl}" target="_blank" class="text-[11px] font-bold text-blue-600 underline">첨부확인</a>` : ''}
+                            </div>
                         </div>
                     </div>
                 `;
@@ -168,12 +183,12 @@
                                 <th class="p-2.5 border-r border-slate-200 w-12">No.</th>
                                 <th class="p-2.5 border-r border-slate-200">배분날짜</th>
                                 <th class="p-2.5 border-r border-slate-200">전화번호</th>
-                                <th class="p-2.5 border-r border-slate-200">지역</th>
+                                <th class="p-2.5 border-r border-slate-200">권역</th>
                                 <th class="p-2.5 border-r border-slate-200">고객명</th>
                                 <th class="p-2.5 border-r border-slate-200">상세주소</th>
                                 <th class="p-2.5 border-r border-slate-200">생년월일/성별</th>
                                 <th class="p-2.5 border-r border-slate-200 w-64">메모</th>
-                                <th class="p-2.5 border-r border-slate-200">배정일시</th>
+                                <th class="p-2.5 border-r border-slate-200">AS상태</th>
                                 <th class="p-2.5">유효기간</th>
                             </tr>
                         </thead>
@@ -192,6 +207,15 @@
             if (mEl) mEl.classList.add('ring-2', 'ring-blue-500');
         }
 
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = error => reject(error);
+                reader.readAsDataURL(file);
+            });
+        }
+
         async function saveAllChanges() {
             if (modifiedRows.size === 0) { alert("변경된 내용이 없습니다."); return; }
             const btn = document.getElementById('globalSaveBtn');
@@ -204,14 +228,39 @@
 
             for (let i = 0; i < indexes.length; i++) {
                 const idx = indexes[i];
-                txt.innerText = `저장 중... (${i + 1}/${indexes.length})`;
+                const dbItem = currentDBList[idx];
+                txt.innerText = `업로드 및 저장 중... (${i + 1}/${indexes.length})`;
+
+                const asReasonVal = document.getElementById(`${pfx}asReason_${idx}`).value;
+                const noteVal = document.getElementById(`${pfx}note_${idx}`).value;
+                const fileInput = document.getElementById(`${pfx}asFile_${idx}`);
+
+                let fileBase64 = "";
+                let fileName = "";
+                let mimeType = "";
+
+                if (fileInput && fileInput.files && fileInput.files.length > 0) {
+                    const f = fileInput.files[0];
+                    fileName = f.name;
+                    mimeType = f.type;
+                    fileBase64 = await fileToBase64(f);
+                }
+
                 const payload = {
-                    action: "updateHyunhwang",
+                    action: "submitAsRequest",
                     agentName: currentAgent,
-                    customerName: document.getElementById(`${pfx}custName_${idx}`).value,
-                    status: document.getElementById(`${pfx}status_${idx}`).value,
-                    note: document.getElementById(`${pfx}note_${idx}`).value
+                    customerName: dbItem.customerName,
+                    region: dbItem.region,
+                    phone: dbItem.phone,
+                    status: asReasonVal ? "AS신청" : "상담진행",
+                    asReason: asReasonVal,
+                    note: noteVal,
+                    fileBase64: fileBase64,
+                    fileName: fileName,
+                    mimeType: mimeType,
+                    existingFileUrl: dbItem.asFileUrl || ""
                 };
+
                 try {
                     await fetch(GAS_WEBAPP_URL, { method: 'POST', body: JSON.stringify(payload) });
                 } catch (e) {}
@@ -219,11 +268,10 @@
 
             alert("저장이 완료되었습니다.");
             btn.disabled = false;
-            txt.innerText = "💾 변경사항 저장";
+            txt.innerText = "💾 변경사항 및 AS신청 저장";
             loadAssignedDBs();
         }
 
-        // 보안 스크립트 유지
         document.addEventListener('contextmenu', e => e.preventDefault());
         document.addEventListener('selectstart', e => e.preventDefault());
         window.addEventListener('blur', () => {
