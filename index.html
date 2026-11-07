@@ -69,4 +69,572 @@
             <div class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
                 
                 <!-- 1. DB 구매신청 -->
-                <div onclick="switchView('order')" class="bg-white hover:bg-slate-50 rounded-2xl p-8 border-2 border-slate-200 hover:border-blue-600 cursor-
+                <div onclick="switchView('order')" class="bg-white hover:bg-slate-50 rounded-2xl p-8 border-2 border-slate-200 hover:border-blue-600 cursor-pointer transition shadow-sm flex flex-col justify-between min-h-[220px]">
+                    <div>
+                        <span class="text-xs font-extrabold text-blue-600 bg-blue-50 px-2.5 py-1 rounded">STEP 01</span>
+                        <h2 class="text-2xl font-black text-slate-900 mt-3">🛒 DB 구매신청</h2>
+                        <p class="text-xs text-slate-500 mt-2">7대 권역 및 복수 DB 상품 동시 주문</p>
+                    </div>
+                    <div class="mt-8 flex items-center justify-between pt-4 border-t border-slate-100">
+                        <span class="text-xs font-bold text-slate-400">회원시트 자동 반영</span>
+                        <span class="bg-blue-600 text-white font-bold px-4 py-2 rounded-lg text-xs">신청하기 →</span>
+                    </div>
+                </div>
+
+                <!-- 2. 고객정보관리 -->
+                <div onclick="openDbAssign()" class="bg-white hover:bg-slate-50 rounded-2xl p-8 border-2 border-slate-200 hover:border-blue-600 cursor-pointer transition shadow-sm flex flex-col justify-between min-h-[220px]">
+                    <div>
+                        <span class="text-xs font-extrabold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded">STEP 02</span>
+                        <h2 class="text-2xl font-black text-slate-900 mt-3">🎧 고객정보관리 (배정DB)</h2>
+                        <p class="text-xs text-slate-500 mt-2">녹취록 청취 · AS 신청 및 증빙 업로드</p>
+                    </div>
+                    <div class="mt-8 flex items-center justify-between pt-4 border-t border-slate-100">
+                        <span class="text-xs font-bold text-slate-400">유효기간 30일</span>
+                        <span class="bg-slate-900 text-white font-bold px-4 py-2 rounded-lg text-xs">내 DB 열기 →</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- 내 구매신청 내역 (로그인 시 중앙 하단에 표시) -->
+            <div id="myOrderHistoryBox" class="hidden max-w-4xl mx-auto bg-white rounded-2xl border border-slate-200 p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-base font-black text-slate-900">나의 DB 구매신청 내역</h3>
+                    <button onclick="loadMyOrders()" class="text-xs font-bold text-blue-600 hover:underline">새로고침 ↻</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-xs text-center border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-600 border-y border-slate-200">
+                                <th class="py-2.5 px-2">신청일시</th>
+                                <th class="py-2.5 px-2">주문번호</th>
+                                <th class="py-2.5 px-2">DB종류</th>
+                                <th class="py-2.5 px-2">희망지역</th>
+                                <th class="py-2.5 px-2">신청수량</th>
+                                <th class="py-2.5 px-2">결제금액</th>
+                                <th class="py-2.5 px-2">입금상태</th>
+                            </tr>
+                        </thead>
+                        <tbody id="myOrderTableBody" class="divide-y divide-slate-100 text-slate-700">
+                            <tr><td colspan="7" class="py-6 text-slate-400">내역이 없습니다.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- [뷰 2: DB 구매신청 화면] -->
+        <div id="viewOrder" class="hidden max-w-4xl mx-auto w-full">
+            <div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-200">
+                <h2 class="text-xl sm:text-2xl font-black text-slate-900">DB 구매신청</h2>
+                <button onclick="switchView('main')" class="px-4 py-2 border border-slate-300 rounded-lg text-xs font-bold text-slate-700 hover:bg-slate-50">← 뒤로가기</button>
+            </div>
+
+            <form onsubmit="submitDatumOrder(event)" class="space-y-6 bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">설계사명 (이름)</label>
+                        <input type="text" id="orderAgentName" required placeholder="예: 홍길동" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-lg text-sm font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">연락처</label>
+                        <input type="tel" id="orderAgentPhone" required placeholder="010-0000-0000" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-lg text-sm font-bold">
+                    </div>
+                </div>
+
+                <!-- 복수 상품 선택 및 상품별 수량 지정 -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-2">1. DB 상품 및 수량 선택 (복수 선택 가능)</label>
+                    <div class="space-y-2.5">
+                        <div class="border border-slate-300 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <label class="flex items-center space-x-3 cursor-pointer">
+                                <input type="checkbox" class="db-item-check w-4 h-4 text-blue-600" value="보장분석 퍼미션 DB" data-price="70000" data-qty-id="qty_item_1" checked onchange="calculateOrderTotal()">
+                                <div>
+                                    <span class="font-bold text-sm text-slate-900">보장분석 퍼미션 DB</span>
+                                    <span class="text-xs font-black text-blue-600 ml-2">70,000원 / 건</span>
+                                </div>
+                            </label>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xs font-bold text-slate-500">신청수량:</span>
+                                <input type="number" id="qty_item_1" min="1" value="10" oninput="calculateOrderTotal()" class="w-24 px-3 py-1.5 border border-slate-300 rounded-lg text-sm font-bold text-right">
+                                <span class="text-xs font-bold text-slate-600">건</span>
+                            </div>
+                        </div>
+
+                        <div class="border border-slate-300 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <label class="flex items-center space-x-3 cursor-pointer">
+                                <input type="checkbox" class="db-item-check w-4 h-4 text-blue-600" value="프리미엄 방문약속 DB" data-price="110000" data-qty-id="qty_item_2" onchange="calculateOrderTotal()">
+                                <div>
+                                    <span class="font-bold text-sm text-slate-900">프리미엄 방문약속 DB</span>
+                                    <span class="text-xs font-black text-blue-600 ml-2">110,000원 / 건</span>
+                                </div>
+                            </label>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xs font-bold text-slate-500">신청수량:</span>
+                                <input type="number" id="qty_item_2" min="1" value="10" oninput="calculateOrderTotal()" class="w-24 px-3 py-1.5 border border-slate-300 rounded-lg text-sm font-bold text-right">
+                                <span class="text-xs font-bold text-slate-600">건</span>
+                            </div>
+                        </div>
+
+                        <div class="border border-slate-300 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <label class="flex items-center space-x-3 cursor-pointer">
+                                <input type="checkbox" class="db-item-check w-4 h-4 text-blue-600" value="실버/유병자 특화 DB" data-price="85000" data-qty-id="qty_item_3" onchange="calculateOrderTotal()">
+                                <div>
+                                    <span class="font-bold text-sm text-slate-900">실버/유병자 특화 DB</span>
+                                    <span class="text-xs font-black text-blue-600 ml-2">85,000원 / 건</span>
+                                </div>
+                            </label>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xs font-bold text-slate-500">신청수량:</span>
+                                <input type="number" id="qty_item_3" min="1" value="10" oninput="calculateOrderTotal()" class="w-24 px-3 py-1.5 border border-slate-300 rounded-lg text-sm font-bold text-right">
+                                <span class="text-xs font-bold text-slate-600">건</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 7대 권역 선택 -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-2">2. 희망 지역 선택 (7대 권역 복수 선택 가능)</label>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2 text-xs">
+                        <div><input type="checkbox" id="reg_1" value="수도권" class="hidden region-checkbox" checked><label for="reg_1" class="block text-center py-3 border border-slate-300 rounded-lg cursor-pointer" title="서울,인천,부천,경기도">수도권</label></div>
+                        <div><input type="checkbox" id="reg_2" value="부산경남" class="hidden region-checkbox"><label for="reg_2" class="block text-center py-3 border border-slate-300 rounded-lg cursor-pointer">부산경남</label></div>
+                        <div><input type="checkbox" id="reg_3" value="전라도" class="hidden region-checkbox"><label for="reg_3" class="block text-center py-3 border border-slate-300 rounded-lg cursor-pointer">전라도</label></div>
+                        <div><input type="checkbox" id="reg_4" value="충청도" class="hidden region-checkbox"><label for="reg_4" class="block text-center py-3 border border-slate-300 rounded-lg cursor-pointer">충청도</label></div>
+                        <div><input type="checkbox" id="reg_5" value="대구경북" class="hidden region-checkbox"><label for="reg_5" class="block text-center py-3 border border-slate-300 rounded-lg cursor-pointer">대구경북</label></div>
+                        <div><input type="checkbox" id="reg_6" value="강원도" class="hidden region-checkbox"><label for="reg_6" class="block text-center py-3 border border-slate-300 rounded-lg cursor-pointer">강원도</label></div>
+                        <div><input type="checkbox" id="reg_7" value="제주도" class="hidden region-checkbox"><label for="reg_7" class="block text-center py-3 border border-slate-300 rounded-lg cursor-pointer">제주도</label></div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex items-center justify-between">
+                    <span id="orderSummaryText" class="text-xs font-bold text-slate-600">보장분석 퍼미션 DB(10건)</span>
+                    <span id="orderTotalPriceDisplay" class="text-xl font-black text-blue-600">700,000원</span>
+                </div>
+
+                <button type="submit" id="orderSubmitBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl text-sm transition">
+                    구매신청 완료하기
+                </button>
+            </form>
+        </div>
+
+    </main>
+
+    <!-- 모바일 하단 고정 탭 -->
+    <div class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-40 grid grid-cols-3 text-center py-2.5 text-xs font-bold">
+        <button onclick="switchView('main')" class="text-slate-700">홈</button>
+        <button onclick="switchView('order')" class="text-blue-600">DB구매신청</button>
+        <button onclick="openDbAssign()" class="text-slate-900">고객정보관리</button>
+    </div>
+
+    <!-- 푸터 -->
+    <footer class="bg-white border-t border-slate-200 text-slate-400 text-xs py-6 text-center">
+        <p class="font-bold text-slate-700">데이텀 (DATUM) | (주)해송홀딩스</p>
+        <p class="mt-1">© 2026 Haesong Holdings. All rights reserved.</p>
+    </footer>
+
+    <!-- 1. 로그인 모달 (아이디 기준 로그인) -->
+    <div id="loginModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl relative">
+            <button onclick="closeModal('loginModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 font-bold">✕</button>
+            <h3 class="text-lg font-black text-slate-900 mb-4">DATUM 로그인</h3>
+            <div class="space-y-3 text-xs">
+                <input id="loginId" type="text" placeholder="아이디 입력" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-600">
+                <input id="loginPw" type="password" placeholder="비밀번호 입력" onkeydown="if(event.key==='Enter') submitLogin()" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-600">
+                <button id="loginSubmitBtn" onclick="submitLogin()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg text-sm transition">로그인</button>
+                <div class="flex items-center justify-center space-x-3 pt-2 text-slate-500">
+                    <button onclick="closeModal('loginModal'); openModal('findIdModal');" class="hover:underline">아이디 찾기</button>
+                    <span class="text-slate-300">|</span>
+                    <button onclick="closeModal('loginModal'); openModal('findPwModal');" class="hover:underline">비밀번호 찾기</button>
+                    <span class="text-slate-300">|</span>
+                    <button onclick="closeModal('loginModal'); openModal('signupModal');" class="font-bold text-blue-600 hover:underline">회원가입</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. 아이디 찾기 모달 -->
+    <div id="findIdModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl relative">
+            <button onclick="closeModal('findIdModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 font-bold">✕</button>
+            <h3 class="text-lg font-black text-slate-900 mb-1">아이디 찾기</h3>
+            <p class="text-[11px] text-slate-500 mb-4">이름과 전화번호를 입력하시면 가입 이메일로 아이디를 보내드립니다.</p>
+            <div class="space-y-3 text-xs">
+                <input id="findIdName" type="text" placeholder="이름 입력" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-lg">
+                <input id="findIdPhone" type="tel" placeholder="전화번호 입력 (예: 010-0000-0000)" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-lg">
+                <button id="findIdBtn" onclick="submitFindId()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg text-sm">이메일로 아이디 받기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. 비밀번호 찾기 모달 -->
+    <div id="findPwModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl relative">
+            <button onclick="closeModal('findPwModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 font-bold">✕</button>
+            <h3 class="text-lg font-black text-slate-900 mb-1">비밀번호 찾기</h3>
+            <p class="text-[11px] text-slate-500 mb-4">이름과 전화번호를 입력하시면 가입 이메일로 아이디와 임시비밀번호를 보내드립니다.</p>
+            <div class="space-y-3 text-xs">
+                <input id="findPwName" type="text" placeholder="이름 입력" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-lg">
+                <input id="findPwPhone" type="tel" placeholder="전화번호 입력 (예: 010-0000-0000)" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-lg">
+                <button id="findPwBtn" onclick="submitFindPassword()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 rounded-lg text-sm">이메일로 임시비밀번호 받기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. 회원가입 모달 (직책 포함) -->
+    <div id="signupModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl relative">
+            <button onclick="closeModal('signupModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 font-bold">✕</button>
+            <h3 class="text-lg font-black text-slate-900 mb-4">회원가입</h3>
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">로그인 아이디</label>
+                    <input id="regUserId" type="text" placeholder="영문/숫자 아이디 입력" class="w-full px-3 py-2.5 border border-slate-300 rounded-lg">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">이름</label>
+                        <input id="regName" type="text" placeholder="예: 홍길동" class="w-full px-3 py-2.5 border border-slate-300 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">직책</label>
+                        <input id="regPosition" type="text" placeholder="예: 지사장 / 팀장" class="w-full px-3 py-2.5 border border-slate-300 rounded-lg">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">소속 회사</label>
+                        <input id="regCompany" type="text" placeholder="소속 회사명" class="w-full px-3 py-2.5 border border-slate-300 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">소속 지사</label>
+                        <input id="regBranch" type="text" placeholder="소속 지사명" class="w-full px-3 py-2.5 border border-slate-300 rounded-lg">
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">비밀번호</label>
+                    <input id="regPassword" type="password" placeholder="비밀번호 입력" class="w-full px-3 py-2.5 border border-slate-300 rounded-lg">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">전화번호</label>
+                    <input id="regPhone" type="tel" placeholder="010-0000-0000" class="w-full px-3 py-2.5 border border-slate-300 rounded-lg">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">이메일 (아이디/비밀번호 찾기 수신용)</label>
+                    <input id="regEmail" type="email" placeholder="example@naver.com" class="w-full px-3 py-2.5 border border-slate-300 rounded-lg">
+                </div>
+                <button id="signupSubmitBtn" onclick="submitSignup()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg text-sm mt-1">가입 신청하기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. 회원정보 수정 모달 -->
+    <div id="memberInfoModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl relative">
+            <button onclick="closeModal('memberInfoModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 font-bold">✕</button>
+            <h3 class="text-lg font-black text-slate-900 mb-4">회원정보 수정</h3>
+            <div class="space-y-3 text-xs">
+                <input id="editPosition" type="text" placeholder="직책" class="w-full px-3 py-2.5 border border-slate-300 rounded-lg">
+                <input id="editCompany" type="text" placeholder="소속 회사" class="w-full px-3 py-2.5 border border-slate-300 rounded-lg">
+                <input id="editBranch" type="text" placeholder="소속 지사" class="w-full px-3 py-2.5 border border-slate-300 rounded-lg">
+                <input id="editPassword" type="password" placeholder="새 비밀번호 (변경 시에만 입력)" class="w-full px-3 py-2.5 border border-slate-300 rounded-lg">
+                <input id="editPhone" type="tel" placeholder="전화번호" class="w-full px-3 py-2.5 border border-slate-300 rounded-lg">
+                <input id="editEmail" type="email" placeholder="이메일" class="w-full px-3 py-2.5 border border-slate-300 rounded-lg">
+                <button onclick="submitUpdateProfile()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg text-sm">저장하기</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const USER_DB_URL = "https://script.google.com/macros/s/AKfycbxWKYa-_UCyPxZqs4Pz3faSAzX52S0OsaxmPiU2jyi_xrn78FM-CxcSgTK7cMKSfN_xog/exec";
+        const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxM8jHtjpXz91t6X-l54CNSoPKAVMuvpoqb3_V5V71X3r7Cx8Ah3OVvyW_fWpCc3T62vg/exec";
+
+        let currentUser = { isLoggedIn: false, userId: '', name: '', position: '', phone: '', status: '' };
+
+        function switchView(viewName) {
+            document.getElementById('viewMain').classList.toggle('hidden', viewName !== 'main');
+            document.getElementById('viewOrder').classList.toggle('hidden', viewName !== 'order');
+            if (viewName === 'order' && currentUser.isLoggedIn) {
+                document.getElementById('orderAgentName').value = currentUser.name;
+                document.getElementById('orderAgentPhone').value = currentUser.phone;
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+        function calculateOrderTotal() {
+            const checks = document.querySelectorAll('.db-item-check:checked');
+            let summaryParts = [];
+            let totalPrice = 0;
+
+            checks.forEach(chk => {
+                const unitPrice = parseInt(chk.getAttribute('data-price'), 10);
+                const qtyId = chk.getAttribute('data-qty-id');
+                const qty = Math.max(1, parseInt(document.getElementById(qtyId).value, 10) || 0);
+                summaryParts.push(`${chk.value}(${qty}건)`);
+                totalPrice += unitPrice * qty;
+            });
+
+            document.getElementById('orderSummaryText').innerText = summaryParts.length > 0 ? summaryParts.join(" + ") : "선택된 상품 없음";
+            document.getElementById('orderTotalPriceDisplay').innerText = totalPrice.toLocaleString() + "원";
+        }
+
+        async function submitDatumOrder(e) {
+            e.preventDefault();
+            const checks = document.querySelectorAll('.db-item-check:checked');
+            if (checks.length === 0) { alert("DB 상품을 최소 1개 이상 선택해주세요."); return; }
+
+            const checkedRegions = Array.from(document.querySelectorAll('.region-checkbox:checked')).map(cb => cb.value);
+            if (checkedRegions.length === 0) { alert("희망 지역을 1개 이상 선택해주세요."); return; }
+
+            const items = [];
+            let totalPrice = 0;
+            let totalQty = 0;
+
+            checks.forEach(chk => {
+                const unitPrice = parseInt(chk.getAttribute('data-price'), 10);
+                const qtyId = chk.getAttribute('data-qty-id');
+                const qty = Math.max(1, parseInt(document.getElementById(qtyId).value, 10) || 1);
+                items.push({
+                    dbType: chk.value,
+                    quantity: qty,
+                    price: unitPrice * qty
+                });
+                totalQty += qty;
+                totalPrice += unitPrice * qty;
+            });
+
+            const btn = document.getElementById('orderSubmitBtn');
+            btn.disabled = true; btn.innerText = "처리 중...";
+
+            try {
+                const res = await fetch(GAS_WEBAPP_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: "submitDbOrder",
+                        agentName: document.getElementById('orderAgentName').value.trim(),
+                        phone: document.getElementById('orderAgentPhone').value.trim(),
+                        items: items,
+                        regions: checkedRegions,
+                        quantity: totalQty,
+                        totalPrice: totalPrice
+                    })
+                });
+                const result = await res.json();
+                alert(result.message || "신청이 완료되었습니다.");
+                switchView('main');
+                if (currentUser.isLoggedIn) loadMyOrders();
+            } catch (err) {
+                alert("구매신청이 접수되었습니다.");
+                switchView('main');
+            } finally {
+                btn.disabled = false; btn.innerText = "구매신청 완료하기";
+            }
+        }
+
+        function openDbAssign() {
+            if (!currentUser.isLoggedIn) {
+                alert('로그인 후 이용해주세요.');
+                openModal('loginModal');
+            } else if (currentUser.status !== '승인') {
+                alert('관리자 승인 대기 중입니다.');
+            } else {
+                localStorage.setItem('rion_logged_user', currentUser.name);
+                window.open('db_assign.html', 'datumDbWindow');
+            }
+        }
+
+        async function loadMyOrders() {
+            if (!currentUser.isLoggedIn) return;
+            try {
+                const res = await fetch(`${GAS_WEBAPP_URL}?mode=orderHistory&agent=${encodeURIComponent(currentUser.name)}`);
+                const list = await res.json();
+                const tbody = document.getElementById('myOrderTableBody');
+                if (!list || list.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="7" class="py-6 text-slate-400">신청 내역이 없습니다.</td></tr>`;
+                    return;
+                }
+                tbody.innerHTML = list.map(item => `
+                    <tr>
+                        <td class="py-2.5 px-2">${item.orderDate}</td>
+                        <td class="py-2.5 px-2 font-mono text-[11px]">${item.orderId}</td>
+                        <td class="py-2.5 px-2 font-bold">${item.dbType}</td>
+                        <td class="py-2.5 px-2">${item.regions}</td>
+                        <td class="py-2.5 px-2 font-bold">${item.quantity}건</td>
+                        <td class="py-2.5 px-2 font-bold text-blue-600">${Number(item.price).toLocaleString()}원</td>
+                        <td class="py-2.5 px-2"><span class="px-2 py-0.5 rounded bg-slate-100 font-bold">${item.status}</span></td>
+                    </tr>
+                `).join('');
+            } catch (e) {}
+        }
+
+        async function submitLogin() {
+            const userId = document.getElementById('loginId').value.trim();
+            const password = document.getElementById('loginPw').value.trim();
+            if (!userId || !password) { alert("아이디와 비밀번호를 모두 입력해주세요."); return; }
+
+            const btn = document.getElementById('loginSubmitBtn');
+            btn.disabled = true; btn.innerText = "확인 중...";
+
+            try {
+                const res = await fetch(USER_DB_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: "login", userId, password })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    currentUser = {
+                        isLoggedIn: true, userId: data.userId, name: data.name,
+                        position: data.position || '', phone: data.phone || '', status: data.status
+                    };
+                    localStorage.setItem('rion_logged_user', data.name);
+                    localStorage.setItem('datum_logged_id', data.userId);
+
+                    document.getElementById('loggedOutUI').classList.add('hidden');
+                    document.getElementById('loggedInUI').classList.remove('hidden');
+                    document.getElementById('displayUserName').innerText = `${data.name} ${data.position || '님'}`;
+                    document.getElementById('displayUserId').innerText = `(${data.userId})`;
+                    document.getElementById('displayUserStatus').innerText = `[${data.status}]`;
+
+                    document.getElementById('myOrderHistoryBox').classList.remove('hidden');
+
+                    document.getElementById('editPosition').value = data.position || '';
+                    document.getElementById('editCompany').value = data.company || '';
+                    document.getElementById('editBranch').value = data.branch || '';
+                    document.getElementById('editPhone').value = data.phone || '';
+                    document.getElementById('editEmail').value = data.email || '';
+
+                    closeModal('loginModal');
+                    loadMyOrders();
+                } else {
+                    alert(data.message);
+                }
+            } catch (e) {
+                alert("로그인 통신 오류가 발생했습니다.");
+            } finally {
+                btn.disabled = false; btn.innerText = "로그인";
+            }
+        }
+
+        async function submitFindId() {
+            const name = document.getElementById('findIdName').value.trim();
+            const phone = document.getElementById('findIdPhone').value.trim();
+            if (!name || !phone) { alert("이름과 전화번호를 모두 입력해주세요."); return; }
+
+            const btn = document.getElementById('findIdBtn');
+            btn.disabled = true; btn.innerText = "발송 중...";
+
+            try {
+                const res = await fetch(USER_DB_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: "findId", name, phone })
+                });
+                const data = await res.json();
+                alert(data.message);
+                if (data.success) closeModal('findIdModal');
+            } catch (e) {
+                alert("통신 오류가 발생했습니다.");
+            } finally {
+                btn.disabled = false; btn.innerText = "이메일로 아이디 받기";
+            }
+        }
+
+        async function submitFindPassword() {
+            const name = document.getElementById('findPwName').value.trim();
+            const phone = document.getElementById('findPwPhone').value.trim();
+            if (!name || !phone) { alert("이름과 전화번호를 모두 입력해주세요."); return; }
+
+            const btn = document.getElementById('findPwBtn');
+            btn.disabled = true; btn.innerText = "발송 중...";
+
+            try {
+                const res = await fetch(USER_DB_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: "findPassword", name, phone })
+                });
+                const data = await res.json();
+                alert(data.message);
+                if (data.success) closeModal('findPwModal');
+            } catch (e) {
+                alert("통신 오류가 발생했습니다.");
+            } finally {
+                btn.disabled = false; btn.innerText = "이메일로 임시비밀번호 받기";
+            }
+        }
+
+        async function submitSignup() {
+            const payload = {
+                action: "signup",
+                userId: document.getElementById('regUserId').value.trim(),
+                name: document.getElementById('regName').value.trim(),
+                position: document.getElementById('regPosition').value.trim(),
+                company: document.getElementById('regCompany').value.trim(),
+                branch: document.getElementById('regBranch').value.trim(),
+                password: document.getElementById('regPassword').value.trim(),
+                phone: document.getElementById('regPhone').value.trim(),
+                email: document.getElementById('regEmail').value.trim()
+            };
+            if (!payload.userId || !payload.name || !payload.password || !payload.phone || !payload.email) {
+                alert("아이디, 이름, 비밀번호, 전화번호, 이메일을 모두 입력해주세요."); return;
+            }
+            const btn = document.getElementById('signupSubmitBtn');
+            btn.disabled = true; btn.innerText = "처리 중...";
+
+            try {
+                const res = await fetch(USER_DB_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                alert(data.message);
+                if (data.success) closeModal('signupModal');
+            } catch (e) {
+                alert("통신 오류가 발생했습니다.");
+            } finally {
+                btn.disabled = false; btn.innerText = "가입 신청하기";
+            }
+        }
+
+        async function submitUpdateProfile() {
+            const payload = {
+                action: "updateProfile",
+                userId: currentUser.userId,
+                position: document.getElementById('editPosition').value.trim(),
+                company: document.getElementById('editCompany').value.trim(),
+                branch: document.getElementById('editBranch').value.trim(),
+                password: document.getElementById('editPassword').value.trim(),
+                phone: document.getElementById('editPhone').value.trim(),
+                email: document.getElementById('editEmail').value.trim()
+            };
+            try {
+                const res = await fetch(USER_DB_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                alert(data.message);
+                if (data.success) closeModal('memberInfoModal');
+            } catch (e) {
+                alert("통신 오류가 발생했습니다.");
+            }
+        }
+
+        function logoutUser() {
+            currentUser = { isLoggedIn: false, userId: '', name: '', position: '', phone: '', status: '' };
+            localStorage.removeItem('rion_logged_user');
+            localStorage.removeItem('datum_logged_id');
+            document.getElementById('loggedOutUI').classList.remove('hidden');
+            document.getElementById('loggedInUI').classList.add('hidden');
+            document.getElementById('myOrderHistoryBox').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
