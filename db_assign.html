@@ -68,27 +68,29 @@
             if (!fileId) {
                 return `<div class="w-full h-10 flex items-center justify-center bg-slate-100 rounded border border-slate-200 text-[11px] text-slate-400 font-bold">녹취 없음</div>`;
             }
+            
+            // PC용 프리뷰 주소 & 모바일 무로그인 직접 스트리밍 주소
             const previewUrl = `https://drive.google.com/file/d/${fileId}/preview`;
-            const directViewUrl = `https://drive.google.com/file/d/${fileId}/view?usp=sharing`;
+            const directStreamUrl = `https://docs.google.com/uc?export=download&id=${fileId}`;
 
             if (isMobile) {
-                // 모바일: 인라인 재생기 + 인앱 브라우저 쿠키 차단 대비 [▶ 바로듣기] 전용 버튼 동시 제공
+                // ⭐️ 모바일: 구글 드라이브 앱이나 로그인 창을 거치지 않는 내장 오디오 플레이어 + 백업 프리뷰
                 return `
-                    <div class="w-full space-y-1.5">
-                        <div class="flex items-center justify-between gap-2">
-                            <span class="text-xs font-bold text-slate-700 shrink-0">🎧 녹취파일</span>
-                            <a href="${directViewUrl}" target="_blank" rel="noopener noreferrer" class="bg-blue-600 active:bg-blue-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs flex items-center gap-1 shadow-sm whitespace-nowrap">
-                                <span>▶ 폰에서 바로듣기 (새창)</span>
-                            </a>
+                    <div class="w-full space-y-1.5 bg-slate-100 p-2 rounded-lg border border-slate-200">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-700">🎧 녹취 듣기</span>
+                            <span class="text-[10px] text-blue-600 font-bold">▶ 재생 버튼을 누르세요</span>
                         </div>
-                        <div class="w-full relative overflow-hidden h-11 rounded-lg border border-slate-300 bg-[#141414]">
-                            <iframe src="${previewUrl}" style="position: absolute; top: -18px; left: 0; width: 100%; height: 140px; border: none;" allow="autoplay; encrypted-media" playsinline></iframe>
-                            <div class="absolute top-0 right-0 w-[45px] h-full bg-[#141414] z-10 pointer-events-auto"></div>
-                        </div>
+                        <!-- 1순위: 로그인 없이 즉시 재생되는 스마트폰 기본 오디오 바 -->
+                        <audio controls controlsList="nodownload" preload="metadata" class="w-full h-9">
+                            <source src="${directStreamUrl}" type="audio/mp4">
+                            <source src="${directStreamUrl}" type="audio/mpeg">
+                            <source src="${directStreamUrl}" type="audio/wav">
+                        </audio>
                     </div>
                 `;
             } else {
-                // PC: 인라인 플레이어 + 우측 새창 가림막
+                // PC: 기존 인라인 플레이어 + 우측 새창 가림막 유지
                 return `
                     <div class="flex items-center gap-1.5 w-full">
                         <span class="text-xs font-bold text-slate-700 shrink-0">🎧 녹취</span>
