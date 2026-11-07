@@ -63,34 +63,26 @@
             return "";
         }
 
-        function buildAudioPlayerHtml(rawUrl, isMobile) {
+        function buildAudioPlayerHtml(rawUrl, isMobile, index) {
             const fileId = extractDriveFileId(rawUrl);
             if (!fileId) {
                 return `<div class="w-full h-10 flex items-center justify-center bg-slate-100 rounded border border-slate-200 text-[11px] text-slate-400 font-bold">녹취 없음</div>`;
             }
             
-            // PC용 프리뷰 주소 & 모바일 무로그인 직접 스트리밍 주소
             const previewUrl = `https://drive.google.com/file/d/${fileId}/preview`;
-            const directStreamUrl = `https://docs.google.com/uc?export=download&id=${fileId}`;
 
             if (isMobile) {
-                // ⭐️ 모바일: 구글 드라이브 앱이나 로그인 창을 거치지 않는 내장 오디오 플레이어 + 백업 프리뷰
+                // ⭐️ 모바일: 구글 드라이브를 거치지 않고 앱스크립트에서 음원을 직접 받아와 100% 재생
                 return `
-                    <div class="w-full space-y-1.5 bg-slate-100 p-2 rounded-lg border border-slate-200">
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs font-bold text-slate-700">🎧 녹취 듣기</span>
-                            <span class="text-[10px] text-blue-600 font-bold">▶ 재생 버튼을 누르세요</span>
-                        </div>
-                        <!-- 1순위: 로그인 없이 즉시 재생되는 스마트폰 기본 오디오 바 -->
-                        <audio controls controlsList="nodownload" preload="metadata" class="w-full h-9">
-                            <source src="${directStreamUrl}" type="audio/mp4">
-                            <source src="${directStreamUrl}" type="audio/mpeg">
-                            <source src="${directStreamUrl}" type="audio/wav">
-                        </audio>
+                    <div id="m_audio_box_${index}" class="w-full bg-slate-100 p-2 rounded-lg border border-slate-200">
+                        <button type="button" id="m_audio_btn_${index}" onclick="playMobileAudio('${fileId}', ${index})" class="w-full bg-blue-600 active:bg-blue-700 text-white font-bold py-2.5 px-3 rounded-lg text-xs flex items-center justify-center gap-1.5 shadow-sm transition">
+                            <span>🎧 터치하여 녹취 바로듣기</span>
+                        </button>
+                        <div id="m_audio_player_wrap_${index}" class="hidden mt-1"></div>
                     </div>
                 `;
             } else {
-                // PC: 기존 인라인 플레이어 + 우측 새창 가림막 유지
+                // PC: 기존 인라인 플레이어 그대로 유지
                 return `
                     <div class="flex items-center gap-1.5 w-full">
                         <span class="text-xs font-bold text-slate-700 shrink-0">🎧 녹취</span>
@@ -100,6 +92,53 @@
                         </div>
                     </div>
                 `;
+            }
+        }
+
+        // ⭐️ 모바일에서 버튼 터치 시 앱스크립트로부터 음원 데이터를 직접 받아와 즉시 재생하는 함수
+        async function playMobileAudio(fileId, index) {
+            const btn = document.getElementById(`m_audio_btn_${index}`);
+            const wrap = document.getElementById(`m_audio_player_wrap_${index}`);
+            if (!btn || !wrap) return;
+
+            btn.disabled = true;
+            btn.innerText = "⏳ 녹취 불러오는 중... (1~2초 소요)";
+            btn.className = "w-full bg-slate-500 text-white font-bold py-2.5 px-3 rounded-lg text-xs flex items-center justify-center gap-1.5";
+
+            try {
+                const res = await fetch(`${GAS_WEBAPP_URL}?mode=getAudio&fileId=${encodeURIComponent(fileId)}`);
+                const data = await res.json();
+
+                if (data.success && data.base64) {
+                    // Base64 데이터를 스마트폰 메모리(Blob URL)로 변환하여 오디오 플레이어에 주입 (구글 로그인/쿠키 완벽 우회)
+                    const byteChars = atob(data.base64);
+                    const byteNumbers = new Array(byteChars.length);
+                    for (let i = 0; i < byteChars.length; i++) {
+                        byteNumbers[i] = byteChars.charCodeAt(i);
+                    }
+                    const byteArray = new Uint8Array(byteNumbers);
+                    const blob = new Blob([byteArray], { type: data.mimeType || 'audio/mp4' });
+                    const audioBlobUrl = URL.createObjectURL(blob);
+
+                    btn.classList.add('hidden');
+                    wrap.classList.remove('hidden');
+                    wrap.innerHTML = `
+                        <audio id="m_audio_el_${index}" controls controlsList="nodownload" autoplay playsinline class="w-full h-10">
+                            <source src="${audioBlobUrl}" type="${data.mimeType || 'audio/mp4'}">
+                        </audio>
+                    `;
+                    const audioEl = document.getElementById(`m_audio_el_${index}`);
+                    if (audioEl) audioEl.play().catch(() => {});
+                } else {
+                    alert("녹취 로드 실패: " + (data.error || "파일을 찾을 수 없습니다."));
+                    btn.disabled = false;
+                    btn.innerText = "🎧 다시 시도하기";
+                }
+            } catch (err) {
+                alert("통신 오류가 발생했습니다. 다시 눌러주세요.");
+                btn.disabled = false;
+                btn.innerText = "🎧 터치하여 녹취 바로듣기";
+                btn.className = "w-full bg-blue-600 text-white font-bold py-2.5 px-3 rounded-lg text-xs flex items-center justify-center gap-1.5";
             }
         }
 
@@ -163,7 +202,7 @@
                         <td colspan="10" class="p-2">
                             <div id="edit_area_${index}" class="flex items-center gap-2.5 p-1.5 rounded-lg">
                                 <div class="w-[24%]">
-                                    ${buildAudioPlayerHtml(db.audioUrl, false)}
+                                    ${buildAudioPlayerHtml(db.audioUrl, false, index)}
                                 </div>
                                 <div class="w-[20%]">
                                     ${generateAsReasonSelect(`asReason_${index}`, valAsReason, index)}
@@ -204,7 +243,7 @@
                             </div>
                         </div>
                         <div class="space-y-2.5">
-                            ${buildAudioPlayerHtml(db.audioUrl, true)}
+                            ${buildAudioPlayerHtml(db.audioUrl, true, index)}
                             ${generateAsReasonSelect(`m_asReason_${index}`, valAsReason, index)}
                             <input type="text" id="m_note_${index}" value="${valNote}" onchange="markModified(${index})" placeholder="상담메모 또는 AS 신청 근거 입력" class="w-full p-2.5 border border-slate-300 rounded-lg text-xs bg-white">
                             <div class="flex items-center justify-between pt-1">
