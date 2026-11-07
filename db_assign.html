@@ -2,27 +2,27 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>데이텀(DATUM) - 배정 DB 및 AS 관리</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
             -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;
-            font-family: 'Malgun Gothic', sans-serif; background-color: #FFFFFF; color: #0F172A;
+            font-family: 'Malgun Gothic', sans-serif; background-color: #FFFFFF; color: #0F172A; word-break: keep-all;
         }
         .capture-protect-mode { filter: blur(15px) !important; opacity: 0.1 !important; pointer-events: none !important; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col bg-white relative">
 
-    <header class="bg-white border-b border-slate-200 p-4 sticky top-0 z-40 flex justify-between items-center">
+    <header class="bg-white border-b border-slate-200 px-3.5 py-3.5 sticky top-0 z-40 flex justify-between items-center whitespace-nowrap">
         <div class="flex items-center space-x-2">
             <div class="w-7 h-7 rounded bg-blue-600 text-white font-black flex items-center justify-center text-sm">D</div>
-            <h1 class="text-base xl:text-lg font-black text-slate-900">나의 배정 DB 리스트 (유효기간 30일)</h1>
+            <h1 class="text-sm sm:text-base xl:text-lg font-black text-slate-900">나의 배정 DB 리스트</h1>
         </div>
         <div class="flex items-center gap-2">
             <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-            <span id="agentNameDisplay" class="font-bold text-sm text-slate-800">로딩 중...</span>
+            <span id="agentNameDisplay" class="font-bold text-xs sm:text-sm text-slate-800">로딩 중...</span>
         </div>
     </header>
 
@@ -33,9 +33,9 @@
     </main>
 
     <!-- 우측 하단 저장 버튼 -->
-    <div class="fixed bottom-6 right-6 z-50">
-        <button id="globalSaveBtn" onclick="saveAllChanges()" class="bg-blue-600 hover:bg-blue-700 text-white font-black py-3.5 px-7 rounded-full shadow-lg transition flex items-center gap-2">
-            <span id="globalSaveText" class="text-sm">💾 변경사항 및 AS신청 저장</span>
+    <div class="fixed bottom-5 right-5 z-50">
+        <button id="globalSaveBtn" onclick="saveAllChanges()" class="bg-blue-600 hover:bg-blue-700 text-white font-black py-3.5 px-6 rounded-full shadow-lg transition flex items-center gap-2 whitespace-nowrap">
+            <span id="globalSaveText" class="text-xs sm:text-sm">💾 변경사항 및 AS신청 저장</span>
         </button>
     </div>
 
@@ -47,10 +47,58 @@
 
         if (!currentAgent) {
             alert('메인 홈페이지에서 로그인을 먼저 진행해주세요.');
-            window.close();
+            window.location.href = 'index.html';
         } else {
             document.getElementById('agentNameDisplay').innerText = `${currentAgent} 님`;
             loadAssignedDBs();
+        }
+
+        // ⭐️ 구글 드라이브 링크에서 파일 고유 ID를 정확히 추출하여 PC & 모바일 모두 작동하는 URL 생성
+        function extractDriveFileId(url) {
+            if (!url) return "";
+            const match1 = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+            if (match1 && match1[1]) return match1[1];
+            const match2 = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+            if (match2 && match2[1]) return match2[1];
+            return "";
+        }
+
+        function buildAudioPlayerHtml(rawUrl, isMobile) {
+            const fileId = extractDriveFileId(rawUrl);
+            if (!fileId) {
+                return `<div class="w-full h-10 flex items-center justify-center bg-slate-100 rounded border border-slate-200 text-[11px] text-slate-400 font-bold">녹취 없음</div>`;
+            }
+            const previewUrl = `https://drive.google.com/file/d/${fileId}/preview`;
+            const directViewUrl = `https://drive.google.com/file/d/${fileId}/view?usp=sharing`;
+
+            if (isMobile) {
+                // 모바일: 인라인 재생기 + 인앱 브라우저 쿠키 차단 대비 [▶ 바로듣기] 전용 버튼 동시 제공
+                return `
+                    <div class="w-full space-y-1.5">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-xs font-bold text-slate-700 shrink-0">🎧 녹취파일</span>
+                            <a href="${directViewUrl}" target="_blank" rel="noopener noreferrer" class="bg-blue-600 active:bg-blue-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs flex items-center gap-1 shadow-sm whitespace-nowrap">
+                                <span>▶ 폰에서 바로듣기 (새창)</span>
+                            </a>
+                        </div>
+                        <div class="w-full relative overflow-hidden h-11 rounded-lg border border-slate-300 bg-[#141414]">
+                            <iframe src="${previewUrl}" style="position: absolute; top: -18px; left: 0; width: 100%; height: 140px; border: none;" allow="autoplay; encrypted-media" playsinline></iframe>
+                            <div class="absolute top-0 right-0 w-[45px] h-full bg-[#141414] z-10 pointer-events-auto"></div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // PC: 인라인 플레이어 + 우측 새창 가림막
+                return `
+                    <div class="flex items-center gap-1.5 w-full">
+                        <span class="text-xs font-bold text-slate-700 shrink-0">🎧 녹취</span>
+                        <div class="flex-grow relative overflow-hidden h-10 rounded border border-slate-300 bg-[#141414]">
+                            <iframe src="${previewUrl}" style="position: absolute; top: -20px; left: 0; width: 100%; height: 150px; border: none;" allow="autoplay"></iframe>
+                            <div class="absolute top-0 right-0 w-[45px] h-full bg-[#141414] z-10"></div>
+                        </div>
+                    </div>
+                `;
+            }
         }
 
         async function loadAssignedDBs() {
@@ -92,8 +140,8 @@
                 const valAsReason = db.asReason || '';
                 const valNote = db.note || '';
                 const approvalBadge = db.asApproval
-                    ? `<span class="px-2 py-0.5 rounded text-[11px] font-bold ${db.asApproval==='승인'?'bg-emerald-100 text-emerald-700':(db.asApproval==='반려'?'bg-rose-100 text-rose-700':'bg-amber-100 text-amber-700')}">AS ${db.asApproval}</span>`
-                    : `<span class="text-slate-400 text-[11px]">정상</span>`;
+                    ? `<span class="px-2 py-0.5 rounded text-[11px] font-bold whitespace-nowrap ${db.asApproval==='승인'?'bg-emerald-100 text-emerald-700':(db.asApproval==='반려'?'bg-rose-100 text-rose-700':'bg-amber-100 text-amber-700')}">AS ${db.asApproval}</span>`
+                    : `<span class="text-slate-400 text-[11px] whitespace-nowrap">정상</span>`;
 
                 // 1. PC 뷰
                 desktopHtml += `
@@ -112,22 +160,15 @@
                     <tr class="border-b-2 border-slate-300 bg-slate-50/70">
                         <td colspan="10" class="p-2">
                             <div id="edit_area_${index}" class="flex items-center gap-2.5 p-1.5 rounded-lg">
-                                <!-- 배정 녹취 듣기 -->
-                                <div class="w-[24%] flex items-center gap-1.5">
-                                    <span class="text-xs font-bold text-slate-700 shrink-0">🎧 녹취</span>
-                                    <div class="flex-grow relative overflow-hidden h-10 rounded border border-slate-300 bg-[#141414]">
-                                        ${db.audioUrl ? `<iframe src="${db.audioUrl.replace('uc?export=download&id=', 'file/d/')}/preview" style="position: absolute; top: -20px; left: 0; width: 100%; height: 150px; border: none;" allow="autoplay"></iframe><div class="absolute top-0 right-0 w-[45px] h-full bg-[#141414] z-10"></div>` : `<div class="w-full h-full flex items-center justify-center bg-slate-100 text-[11px] text-slate-400">녹취 없음</div>`}
-                                    </div>
+                                <div class="w-[24%]">
+                                    ${buildAudioPlayerHtml(db.audioUrl, false)}
                                 </div>
-                                <!-- AS 사유 선택 -->
                                 <div class="w-[20%]">
                                     ${generateAsReasonSelect(`asReason_${index}`, valAsReason, index)}
                                 </div>
-                                <!-- 신청 근거 및 메모 -->
                                 <div class="w-[32%]">
                                     <input type="text" id="note_${index}" value="${valNote}" onchange="markModified(${index})" placeholder="상담메모 또는 AS 신청 근거 입력" class="w-full p-2 border border-slate-300 rounded-lg text-xs bg-white focus:border-blue-600 focus:outline-none">
                                 </div>
-                                <!-- AS 증빙파일(녹취/이미지) 업로드 -->
                                 <div class="w-[24%] flex items-center gap-1.5">
                                     <input type="file" id="asFile_${index}" accept="audio/*,image/*,.mp3,.m4a,.wav,.jpg,.png,.pdf" onchange="markModified(${index})" class="text-[11px] text-slate-600 file:mr-2 file:py-1.5 file:px-2.5 file:rounded-lg file:border-0 file:text-[11px] file:font-bold file:bg-slate-200 file:text-slate-800 hover:file:bg-slate-300">
                                     ${db.asFileUrl ? `<a href="${db.asFileUrl}" target="_blank" class="text-[11px] font-bold text-blue-600 underline shrink-0">첨부확인</a>` : ''}
@@ -139,36 +180,34 @@
 
                 // 2. 모바일 뷰
                 mobileHtml += `
-                    <div id="m_edit_area_${index}" class="bg-white rounded-xl border border-slate-200 p-4 mb-3 shadow-sm">
+                    <div id="m_edit_area_${index}" class="bg-white rounded-xl border border-slate-200 p-4 mb-3.5 shadow-sm">
                         <div class="flex justify-between items-center pb-2.5 mb-2.5 border-b border-slate-100">
-                            <div>
-                                <span class="text-xs font-bold text-slate-400 mr-1">#${index + 1}</span>
-                                <span class="font-black text-base text-slate-900">${db.customerName || '-'}</span>
-                                <span class="ml-1 text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded font-bold">${db.region || '-'}</span>
-                            </div>
                             <div class="flex items-center gap-1.5">
+                                <span class="text-xs font-bold text-slate-400">#${index + 1}</span>
+                                <span class="font-black text-base text-slate-900">${db.customerName || '-'}</span>
+                                <span class="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded font-bold whitespace-nowrap">${db.region || '-'}</span>
+                            </div>
+                            <div class="flex items-center gap-1.5 shrink-0">
                                 ${approvalBadge}
-                                <span class="text-blue-600 font-bold text-[11px]">${db.timeLimit || '30일'}</span>
                             </div>
                         </div>
-                        <div class="grid grid-cols-2 gap-2 text-xs mb-3 bg-slate-50 p-2.5 rounded-lg">
-                            <div><span class="text-slate-400 block text-[10px]">연락처</span><a href="tel:${db.phone}" class="font-bold text-blue-600 underline">${db.phone || '-'}</a></div>
+                        <div class="grid grid-cols-2 gap-2 text-xs mb-3 bg-slate-50 p-3 rounded-lg">
+                            <div><span class="text-slate-400 block text-[10px]">연락처 (터치 시 통화)</span><a href="tel:${db.phone}" class="font-bold text-blue-600 underline text-sm">${db.phone || '-'}</a></div>
                             <div><span class="text-slate-400 block text-[10px]">생년월일/성별</span><span class="font-bold">${db.birth || '-'} / ${db.gender || '-'}</span></div>
                             <div class="col-span-2"><span class="text-slate-400 block text-[10px]">주소</span><span class="font-bold">${db.sido || ''} ${db.gugun || ''} ${db.dong || ''}</span></div>
                             <div class="col-span-2"><span class="text-slate-400 block text-[10px]">메모</span><span>${db.memo || '-'}</span></div>
-                        </div>
-                        <div class="space-y-2">
-                            <div class="flex items-center gap-2">
-                                <span class="text-xs font-bold text-slate-700 shrink-0">🎧 녹취</span>
-                                <div class="flex-grow relative overflow-hidden h-10 rounded border border-slate-300 bg-[#141414]">
-                                    ${db.audioUrl ? `<iframe src="${db.audioUrl.replace('uc?export=download&id=', 'file/d/')}/preview" style="position: absolute; top: -20px; left: 0; width: 100%; height: 150px; border: none;" allow="autoplay"></iframe><div class="absolute top-0 right-0 w-[45px] h-full bg-[#141414] z-10"></div>` : `<div class="w-full h-full flex items-center justify-center bg-slate-100 text-[11px] text-slate-400">녹취 없음</div>`}
-                                </div>
+                            <div class="col-span-2 pt-1 border-t border-slate-200 flex justify-between items-center">
+                                <span class="text-[11px] text-slate-400">배정일: ${db.assignDate || '-'}</span>
+                                <span class="text-blue-600 font-bold text-[11px]">${db.timeLimit || '30일'}</span>
                             </div>
+                        </div>
+                        <div class="space-y-2.5">
+                            ${buildAudioPlayerHtml(db.audioUrl, true)}
                             ${generateAsReasonSelect(`m_asReason_${index}`, valAsReason, index)}
-                            <input type="text" id="m_note_${index}" value="${valNote}" onchange="markModified(${index})" placeholder="상담메모 또는 AS 신청 근거 입력" class="w-full p-2 border border-slate-300 rounded-lg text-xs bg-white">
+                            <input type="text" id="m_note_${index}" value="${valNote}" onchange="markModified(${index})" placeholder="상담메모 또는 AS 신청 근거 입력" class="w-full p-2.5 border border-slate-300 rounded-lg text-xs bg-white">
                             <div class="flex items-center justify-between pt-1">
                                 <input type="file" id="m_asFile_${index}" accept="audio/*,image/*,.mp3,.m4a,.wav,.jpg,.png,.pdf" onchange="markModified(${index})" class="text-[11px] text-slate-600 file:mr-2 file:py-1.5 file:px-2.5 file:rounded-lg file:border-0 file:text-[11px] file:font-bold file:bg-slate-200 file:text-slate-800">
-                                ${db.asFileUrl ? `<a href="${db.asFileUrl}" target="_blank" class="text-[11px] font-bold text-blue-600 underline">첨부확인</a>` : ''}
+                                ${db.asFileUrl ? `<a href="${db.asFileUrl}" target="_blank" class="text-[11px] font-bold text-blue-600 underline whitespace-nowrap ml-2">첨부확인</a>` : ''}
                             </div>
                         </div>
                     </div>
