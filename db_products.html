@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>데이텀 (DATUM) - DB상품 및 마케터 센터</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+        body { font-family: 'Pretendard', -apple-system, sans-serif; background-color: #FFFFFF; color: #0F172A; word-break: keep-all; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col bg-white text-slate-900 pb-20 md:pb-0">
+
+    <!-- 상단 헤더 (메인 index.html과 100% 동일한 네비게이션 및 로그인 연동) -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-40">
+        <div class="max-w-6xl mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2">
+            <div class="flex items-center shrink-0">
+                <a href="index.html" class="flex items-center space-x-2 focus:outline-none">
+                    <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-blue-600 flex items-center justify-center font-black text-base sm:text-lg text-white">D</div>
+                    <span class="font-black text-lg sm:text-xl tracking-tight text-slate-900">DATUM</span>
+                </a>
+            </div>
+
+            <nav class="hidden md:flex items-center justify-center space-x-8 text-sm font-bold text-slate-700 shrink-0">
+                <a href="index.html" class="hover:text-blue-600 transition whitespace-nowrap">홈</a>
+                <a href="db_products.html" class="text-blue-600 font-black whitespace-nowrap">DB상품</a>
+                <a href="index.html?view=order" class="hover:text-blue-600 transition whitespace-nowrap">DB 주문신청</a>
+                <button onclick="openDbAssign()" class="hover:text-blue-600 transition whitespace-nowrap">고객정보관리</button>
+            </nav>
+
+            <div class="flex items-center justify-end shrink-0 text-[11px] sm:text-xs whitespace-nowrap">
+                <div id="loggedOutUI" class="flex items-center space-x-2">
+                    <a href="index.html?login=true" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1.5 rounded-lg transition">로그인 / 회원가입</a>
+                </div>
+                <div id="loggedInUI" class="hidden flex items-center space-x-2">
+                    <span id="displayUserName" class="font-black text-slate-900"></span>
+                    <span id="marketerBadge" class="px-2 py-0.5 rounded font-bold bg-slate-100 text-slate-600">일반회원</span>
+                    <a href="index.html" class="text-slate-500 hover:text-blue-600 underline">메인으로</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 서브 헤더 및 3대 기능 탭 (DB상품 쇼케이스 / 마케터 상품등록·설정 / 마케터 검증신청) -->
+    <div class="bg-slate-50 border-b border-slate-200">
+        <div class="max-w-6xl mx-auto px-4 pt-7 pb-4">
+            <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                <div>
+                    <span class="text-[11px] font-extrabold text-blue-600 bg-blue-100/80 px-2.5 py-1 rounded">VERIFIED DB MARKETPLACE</span>
+                    <h1 class="text-2xl sm:text-3xl font-black text-slate-900 mt-2">검증된 퍼미션 DB 상품 안내</h1>
+                    <p class="text-xs sm:text-sm text-slate-500 mt-1">사업자등록증 및 제3자 정보제공동의 검증을 통과한 공식 마케터의 DB 상품만 등록·판매됩니다.</p>
+                </div>
+                <!-- 엔진 내부 탭 스위치 -->
+                <div class="flex space-x-1.5 bg-white p-1 rounded-xl border border-slate-200 self-start sm:self-auto whitespace-nowrap text-xs font-bold">
+                    <button id="tabBtnShowcase" onclick="switchProductTab('showcase')" class="px-3.5 py-2 rounded-lg bg-blue-600 text-white transition">📦 DB상품 목록</button>
+                    <button id="tabBtnManage" onclick="switchProductTab('manage')" class="px-3.5 py-2 rounded-lg text-slate-600 hover:bg-slate-100 transition">🛠️ 상품 등록·설정</button>
+                    <button id="tabBtnApply" onclick="switchProductTab('apply')" class="px-3.5 py-2 rounded-lg text-slate-600 hover:bg-slate-100 transition">🏅 마케터 등록신청</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 메인 컨텐츠 -->
+    <main class="flex-grow max-w-6xl w-full mx-auto px-4 py-8">
+
+        <!-- ==================== [탭 1: 정심에셋 스타일 DB상품 소개 쇼케이스] ==================== -->
+        <section id="secShowcase" class="space-y-6">
+            <!-- 카테고리 필터 -->
+            <div class="flex items-center gap-2 overflow-x-auto pb-1 text-xs font-bold whitespace-nowrap">
+                <button onclick="filterCategory('ALL')" id="cat_ALL" class="cat-btn px-4 py-2 rounded-full bg-slate-900 text-white">전체 상품</button>
+                <button onclick="filterCategory('퍼미션 DB')" id="cat_퍼미션 DB" class="cat-btn px-4 py-2 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200">퍼미션 DB</button>
+                <button onclick="filterCategory('방문약속 DB')" id="cat_방문약속 DB" class="cat-btn px-4 py-2 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200">방문약속 DB</button>
+                <button onclick="filterCategory('실버/유병자 DB')" id="cat_실버/유병자 DB" class="cat-btn px-4 py-2 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200">실버/유병자 DB</button>
+                <button onclick="filterCategory('법인/특화 DB')" id="cat_법인/특화 DB" class="cat-btn px-4 py-2 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200">법인/특화 DB</button>
+            </div>
+
+            <!-- 상품 카드 그리드 -->
+            <div id="productGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="col-span-full text-center py-20 text-slate-400 font-bold text-sm">등록된 DB 상품을 불러오는 중입니다...</div>
+            </div>
+        </section>
+
+        <!-- ==================== [탭 2: 마케터 전용 상품 등록 및 설정 탭] ==================== -->
+        <section id="secManage" class="hidden space-y-8">
+            <!-- 미승인 회원 안내창 -->
+            <div id="notMarketerNotice" class="hidden bg-slate-50 border border-slate-200 rounded-2xl p-8 text-center max-w-lg mx-auto">
+                <div class="text-4xl mb-3">🔒</div>
+                <h3 class="text-lg font-black text-slate-900">승인된 마케터 전용 메뉴입니다</h3>
+                <p id="notMarketerDesc" class="text-xs text-slate-500 mt-2 leading-relaxed">
+                    회원 로그인 후 [마케터 등록신청] 탭에서 사업자등록증과 제3자 동의 증빙서류를 제출하시고 메인 관리자의 승인을 받으시면 직접 DB 상품을 등록·판매하실 수 있습니다.
+                </p>
+                <button onclick="switchProductTab('apply')" class="mt-5 bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl text-xs">마케터 등록신청 바로가기 →</button>
+            </div>
+
+            <!-- 승인된 마케터 전용 작업창 -->
+            <div id="marketerWorkspace" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <!-- 좌측: 신규 상품 등록 / 수정 폼 (5칸) -->
+                <div class="lg:col-span-5 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm h-fit">
+                    <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                        <h2 id="formTitle" class="text-base font-black text-slate-900">➕ 신규 DB상품 등록</h2>
+                        <button type="button" onclick="resetProductForm()" class="text-xs text-slate-400 hover:text-slate-700 underline">초기화</button>
+                    </div>
+
+                    <form onsubmit="submitProductForm(event)" class="space-y-3.5 text-xs">
+                        <input type="hidden" id="editProductId" value="">
+                        <div class="grid grid-cols-2 gap-2.5">
+                            <div>
+                                <label class="block font-bold text-slate-700 mb-1">카테고리</label>
+                                <select id="prdCategory" class="w-full px-3 py-2.5 border border-slate-300 rounded-lg font-bold bg-white">
+                                    <option value="퍼미션 DB">퍼미션 DB</option>
+                                    <option value="방문약속 DB">방문약속 DB</option>
+                                    <option value="실버/유병자 DB">실버/유병자 DB</option>
+                                    <option value="법인/특화 DB">법인/특화 DB</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block font-bold text-slate-700 mb-1">판매 상태 설정</label>
+                                <select id="prdSaleStatus" class="w-full px-3 py-2.5 border border-slate-300 rounded-lg font-bold bg-white text-blue-600">
+                                    <option value="판매중">판매중 (주문신청 노출)</option>
+                                    <option value="일시품절">일시품절 (품절 표시)</option>
+                                    <option value="숨김">숨김 (비공개)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block font-bold text-slate-700 mb-1">DB 상품명 (메인 주문신청에 동일하게 자동 등록됨)</label>
+                            <input type="text" id="prdName" required placeholder="예: [메타/유튜브] 실손·보장분석 퍼미션 DB" class="w-full px-3 py-2.5 border border-slate-300 rounded-lg font-bold">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2.5">
+                            <div>
+                                <label class="block font-bold text-slate-700 mb-1">건당 판매 단가 (원)</label>
+                                <input type="number" id="prdPrice" required min="1000" step="1000" placeholder="70000" class="w-full px-3 py-2.5 border border-slate-300 rounded-lg font-bold text-right">
+                            </div>
+                            <div>
+                                <label class="block font-bold text-slate-700 mb-1">기본(최소) 주문 수량</label>
+                                <input type="number" id="prdMinQty" required min="1" value="10" class="w-full px-3 py-2.5 border border-slate-300 rounded-lg font-bold text-right">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block font-bold text-slate-700 mb-1">타겟 연령 및 공급 권역</label>
+                            <input type="text" id="prdTarget" required placeholder="예: 30~60세 / 전국 7대권역 선택 가능" class="w-full px-3 py-2.5 border border-slate-300 rounded-lg">
+                        </div>
+
+                        <div>
+                            <label class="block font-bold text-slate-700 mb-1">핵심 특징 태그 (쉼표로 구분)</label>
+                            <input type="text" id="prdTags" placeholder="예: 100% 제3자동의, 녹취제공, 결번·중복 100% 교환" class="w-full px-3 py-2.5 border border-slate-300 rounded-lg">
+                        </div>
+
+                        <div>
+                            <label class="block font-bold text-slate-700 mb-1">상품 상세 설명 (추출 매체 / 제3자동의 방식 / 불량 AS 교환 기준)</label>
+                            <textarea id="prdDesc" rows="4" required placeholder="추출 광고 매체, 고객 유입 방식, 녹취 제공 여부 및 불량 DB 교환(A/S) 기준을 상세히 작성해주세요." class="w-full px-3 py-2.5 border border-slate-300 rounded-lg"></textarea>
+                        </div>
+
+                        <button type="submit" id="prdSubmitBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-xl text-sm shadow-sm transition">
+                            상품 저장 및 주문신청 자동 연동하기
+                        </button>
+                    </form>
+                </div>
+
+                <!-- 우측: 내가 등록한 상품 목록 및 상태 설정 (7칸) -->
+                <div class="lg:col-span-7 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                    <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                        <div>
+                            <h2 class="text-base font-black text-slate-900">📋 내가 등록한 DB상품 관리</h2>
+                            <p class="text-[11px] text-slate-500 mt-0.5">'판매중' 상태인 상품은 메인 홈페이지 [DB 주문신청]에 실시간 노출됩니다.</p>
+                        </div>
+                        <button onclick="loadMyMarketerProducts()" class="text-xs font-bold text-blue-600 hover:underline">새로고침 ↻</button>
+                    </div>
+                    <div id="myMarketerProductList" class="space-y-3">
+                        <div class="text-center py-12 text-slate-400 text-xs">등록하신 상품이 없습니다.</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== [탭 3: 마케터 검증 및 등록 신청 탭] ==================== -->
+        <section id="secApply" class="hidden max-w-2xl mx-auto">
+            <div class="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-5">
+                    <div>
+                        <h2 class="text-xl font-black text-slate-900">🏅 공식 마케터 검증 및 등록 신청</h2>
+                        <p class="text-xs text-slate-500 mt-1">적법한 사업자 및 제3자 정보제공동의 절차를 갖춘 마케터만 승인됩니다.</p>
+                    </div>
+                    <span id="applyCurrentStatusBadge" class="px-3 py-1 rounded-full text-xs font-black bg-slate-100 text-slate-600 whitespace-nowrap">확인중</span>
+                </div>
+
+                <form onsubmit="submitMarketerApplication(event)" class="space-y-4 text-xs">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                        <div>
+                            <label class="block font-bold text-slate-600 mb-1">회원 아이디</label>
+                            <input type="text" id="mkUserId" readonly class="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white font-bold text-slate-700">
+                        </div>
+                        <div>
+                            <label class="block font-bold text-slate-600 mb-1">담당자 이름</label>
+                            <input type="text" id="mkUserName" readonly class="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white font-bold text-slate-700">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block font-bold text-slate-700 mb-1">상호명 (법인/사업자명) *</label>
+                            <input type="text" id="mkBizName" required placeholder="예: (주)데이텀마케팅" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-lg font-bold">
+                        </div>
+                        <div>
+                            <label class="block font-bold text-slate-700 mb-1">사업자등록번호 *</label>
+                            <input type="text" id="mkBizNo" required placeholder="000-00-00000" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-lg font-bold">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">주요 DB 생성 매체 및 방식 소개 *</label>
+                        <textarea id="mkMediaDesc" rows="3" required placeholder="예: 자체 보험비교 랜딩페이지 운영 (메타/구글/유튜브 광고 직접 집행), 1차 인바운드/아웃바운드 녹취 검수 포함" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-lg"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">개인정보 수집 및 제3자 정보제공동의 구축 여부 *</label>
+                        <select id="mkConsentCheck" required class="w-full px-3.5 py-2.5 border border-slate-300 rounded-lg font-bold bg-white text-blue-700">
+                            <option value="제3자동의 적법구축 완료 (증빙첨부)">✅ 개인정보 수집·이용 및 제3자 제공동의 적법 구축 완료 (필수)</option>
+                        </select>
+                    </div>
+
+                    <!-- 필수 증빙 서류 업로드 2종 -->
+                    <div class="space-y-3 bg-blue-50/50 p-4 rounded-xl border border-blue-200">
+                        <p class="font-black text-slate-900 text-xs">📎 마케터 진위 검증용 필수 서류 업로드 (이미지 또는 PDF)</p>
+                        <div>
+                            <label class="block font-bold text-slate-700 mb-1">1. 사업자등록증 사본 (JPG, PNG, PDF) *</label>
+                            <input type="file" id="mkBizFile" required accept="image/*,.pdf" class="w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-3.5 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-blue-600 file:text-white hover:file:bg-blue-700 bg-white p-1.5 rounded-lg border border-slate-200">
+                        </div>
+                        <div>
+                            <label class="block font-bold text-slate-700 mb-1">2. 제3자 정보제공동의 증빙 (랜딩 동의화면 캡처 또는 동의서 양식 PDF/이미지) *</label>
+                            <input type="file" id="mkConsentFile" required accept="image/*,.pdf" class="w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-3.5 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-slate-800 file:text-white hover:file:bg-slate-900 bg-white p-1.5 rounded-lg border border-slate-200">
+                        </div>
+                    </div>
+
+                    <button type="submit" id="mkApplySubmitBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3.5 rounded-xl text-sm shadow-sm transition">
+                        검증 서류 제출 및 마케터 승인 요청하기
+                    </button>
+                </form>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- 상품 상세 스펙 보기 모달 -->
+    <div id="prdDetailModal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl relative">
+            <button onclick="document.getElementById('prdDetailModal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 font-bold text-lg">✕</button>
+            <div class="flex items-center gap-2 mb-2">
+                <span id="detCategory" class="text-[11px] font-extrabold bg-blue-50 text-blue-600 px-2.5 py-0.5 rounded"></span>
+                <span id="detMarketer" class="text-[11px] font-bold bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded"></span>
+            </div>
+            <h3 id="detTitle" class="text-xl font-black text-slate-900"></h3>
+            <p id="detPrice" class="text-2xl font-black text-blue-600 mt-2"></p>
+
+            <div class="mt-4 bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2 text-xs">
+                <div class="flex justify-between"><span class="text-slate-400 font-bold">타겟 및 권역</span><span id="detTarget" class="font-bold text-slate-800"></span></div>
+                <div class="flex justify-between"><span class="text-slate-400 font-bold">권장 최소수량</span><span id="detMinQty" class="font-bold text-slate-800"></span></div>
+            </div>
+
+            <div class="mt-4">
+                <span class="text-xs font-bold text-slate-700 block mb-1.5">상품 상세 안내 및 불량 교환(A/S) 기준</span>
+                <div id="detDesc" class="text-xs text-slate-600 bg-white border border-slate-200 rounded-xl p-3.5 leading-relaxed whitespace-pre-line max-h-48 overflow-y-auto"></div>
+            </div>
+
+            <div class="mt-5">
+                <button id="detOrderBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3.5 rounded-xl text-sm transition">
+                    🛒 이 상품 바로 주문신청 하기 →
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 모바일 하단 4열 고정 바 -->
+    <div class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-40 grid grid-cols-4 text-center py-3 text-[11px] font-bold shadow-[0_-2px_10px_rgba(0,0,0,0.04)]">
+        <a href="index.html" class="text-slate-600">홈</a>
+        <a href="db_products.html" class="text-blue-600 font-black">DB상품</a>
+        <a href="index.html?view=order" class="text-slate-600">DB주문신청</a>
+        <button onclick="openDbAssign()" class="text-slate-900">고객정보관리</button>
+    </div>
+
+    <footer class="bg-white border-t border-slate-200 text-slate-400 text-xs py-6 text-center mt-8">
+        <p class="font-bold text-slate-700">데이텀 (DATUM) | (주)해송홀딩스</p>
+        <p class="mt-1">© 2026 Haesong Holdings. All rights reserved.</p>
+    </footer>
+
+    <script>
+        const USER_DB_URL = "https://script.google.com/macros/s/AKfycbxWKYa-_UCyPxZqs4Pz3faSAzX52S0OsaxmPiU2jyi_xrn78FM-CxcSgTK7cMKSfN_xog/exec";
+        const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxM8jHtjpXz91t6X-l54CNSoPKAVMuvpoqb3_V5V71X3r7Cx8Ah3OVvyW_fWpCc3T62vg/exec";
+
+        let loggedUser = {
+            userId: localStorage.getItem('datum_logged_id') || '',
+            name: localStorage.getItem('rion_logged_user') || '',
+            phone: localStorage.getItem('datum_logged_phone') || '',
+            email: localStorage.getItem('datum_logged_email') || '',
+            status: localStorage.getItem('datum_logged_status') || ''
+        };
+        let marketerInfo = { isMarketer: false, status: '미신청', bizName: '' };
+        let allProducts = [];
+        let selectedCategory = 'ALL';
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (loggedUser.userId && loggedUser.name) {
+                document.getElementById('loggedOutUI').classList.add('hidden');
+                document.getElementById('loggedInUI').classList.remove('hidden');
+                document.getElementById('displayUserName').innerText = `${loggedUser.name}님`;
+                document.getElementById('mkUserId').value = loggedUser.userId;
+                document.getElementById('mkUserName').value = loggedUser.name;
+                await checkMyMarketerStatus();
+            }
+            await loadAllProducts();
+        });
+
+        async function checkMyMarketerStatus() {
+            if (!loggedUser.userId) return;
+            try {
+                const res = await fetch(USER_DB_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: "getMarketerStatus", userId: loggedUser.userId })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    marketerInfo = {
+                        isMarketer: data.isMarketer,
+                        status: data.marketerStatus || '미신청',
+                        bizName: data.bizName || ''
+                    };
+                    const badge = document.getElementById('marketerBadge');
+                    const applyBadge = document.getElementById('applyCurrentStatusBadge');
+                    if (marketerInfo.isMarketer) {
+                        badge.innerText = "🏅 인증마케터";
+                        badge.className = "px-2 py-0.5 rounded font-bold bg-emerald-100 text-emerald-700";
+                        applyBadge.innerText = "승인완료 (인증마케터)";
+                        applyBadge.className = "px-3 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-700";
+                    } else if (marketerInfo.status === '대기') {
+                        badge.innerText = "마케터 심사중";
+                        badge.className = "px-2 py-0.5 rounded font-bold bg-amber-100 text-amber-700";
+                        applyBadge.innerText = "서류 심사 대기중";
+                        applyBadge.className = "px-3 py-1 rounded-full text-xs font-black bg-amber-100 text-amber-700";
+                    } else {
+                        applyBadge.innerText = `현재 상태: ${marketerInfo.status}`;
+                    }
+                }
+            } catch (e) {}
+        }
+
+        function switchProductTab(tab) {
+            ['showcase', 'manage', 'apply'].forEach(t => {
+                document.getElementById('sec' + t.charAt(0).toUpperCase() + t.slice(1)).classList.toggle('hidden', t !== tab);
+                const btn = document.getElementById('tabBtn' + t.charAt(0).toUpperCase() + t.slice(1));
+                btn.className = (t === tab)
+                    ? "px-3.5 py-2 rounded-lg bg-blue-600 text-white transition"
+                    : "px-3.5 py-2 rounded-lg text-slate-600 hover:bg-slate-100 transition";
+            });
+
+            if (tab === 'apply' && !loggedUser.userId) {
+                alert("먼저 메인 홈페이지에서 회원가입 및 로그인을 진행해주세요.");
+                window.location.href = "index.html?login=true";
+                return;
+            }
+
+            if (tab === 'manage') {
+                if (!loggedUser.userId) {
+                    document.getElementById('notMarketerNotice').classList.remove('hidden');
+                    document.getElementById('marketerWorkspace').classList.add('hidden');
+                    document.getElementById('notMarketerDesc').innerText = "로그인이 필요합니다. 먼저 로그인 후 마케터 승인을 받아주세요.";
+                } else if (!marketerInfo.isMarketer) {
+                    document.getElementById('notMarketerNotice').classList.remove('hidden');
+                    document.getElementById('marketerWorkspace').classList.add('hidden');
+                    document.getElementById('notMarketerDesc').innerText = marketerInfo.status === '대기'
+                        ? "현재 제출하신 사업자등록증 및 제3자동의 증빙서류를 메인 관리자가 심사 중입니다. 승인 완료 즉시 상품 등록이 활성화됩니다."
+                        : "마케터 등록 승인을 받은 회원만 상품을 등록하고 설정할 수 있습니다.";
+                } else {
+                    document.getElementById('notMarketerNotice').classList.add('hidden');
+                    document.getElementById('marketerWorkspace').classList.remove('hidden');
+                    loadMyMarketerProducts();
+                }
+            }
+        }
+
+        async function loadAllProducts() {
+            try {
+                const res = await fetch(`${GAS_WEBAPP_URL}?mode=getProducts`);
+                allProducts = await res.json();
+                renderProductShowcase();
+            } catch (e) {
+                document.getElementById('productGrid').innerHTML = `<div class="col-span-full text-center py-16 text-rose-500 font-bold text-xs">상품 목록을 불러오지 못했습니다.</div>`;
+            }
+        }
+
+        function filterCategory(cat) {
+            selectedCategory = cat;
+            document.querySelectorAll('.cat-btn').forEach(b => {
+                b.className = "cat-btn px-4 py-2 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200";
+            });
+            const activeBtn = document.getElementById('cat_' + cat);
+            if (activeBtn) activeBtn.className = "cat-btn px-4 py-2 rounded-full bg-slate-900 text-white";
+            renderProductShowcase();
+        }
+
+        function renderProductShowcase() {
+            const grid = document.getElementById('productGrid');
+            const filtered = selectedCategory === 'ALL'
+                ? allProducts
+                : allProducts.filter(p => p.category === selectedCategory);
+
+            if (!filtered || filtered.length === 0) {
+                grid.innerHTML = `<div class="col-span-full text-center py-20 text-slate-400 font-bold text-sm">해당 카테고리에 등록된 상품이 없습니다.</div>`;
+                return;
+            }
+
+            grid.innerHTML = filtered.map((p, idx) => {
+                const isSoldOut = p.saleStatus === '일시품절';
+                const tagBadges = (p.tags || '').split(',').map(t => t.trim()).filter(Boolean).map(t =>
+                    `<span class="bg-slate-100 text-slate-700 text-[11px] font-semibold px-2 py-0.5 rounded">#${t}</span>`
+                ).join(' ');
+
+                return `
+                    <div class="bg-white rounded-2xl border-2 ${isSoldOut ? 'border-slate-200 opacity-75' : 'border-slate-200 hover:border-blue-600'} p-6 shadow-sm transition flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between gap-2 mb-3">
+                                <span class="text-[11px] font-extrabold px-2.5 py-1 rounded bg-blue-50 text-blue-600">${p.category}</span>
+                                <span class="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">✔ ${p.marketerName}</span>
+                            </div>
+                            <h3 class="text-lg font-black text-slate-900 leading-snug">${p.dbType}</h3>
+                            <p class="text-xs text-slate-500 mt-1.5 font-medium">🎯 ${p.targetInfo}</p>
+                            <div class="flex flex-wrap gap-1.5 mt-3">${tagBadges}</div>
+                            <p class="text-xs text-slate-600 mt-4 line-clamp-3 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100">${p.description || '상세 설명 참조'}</p>
+                        </div>
+
+                        <div class="mt-6 pt-4 border-t border-slate-100">
+                            <div class="flex items-baseline justify-between mb-3">
+                                <span class="text-xs font-bold text-slate-400">건당 공급단가 (최소 ${p.minQty}건)</span>
+                                <span class="text-xl font-black text-blue-600">${Number(p.price).toLocaleString()}원</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button onclick="openDetailModal('${p.productId}')" class="py-2.5 border border-slate-300 hover:bg-slate-50 rounded-xl text-xs font-bold text-slate-700">상세기준 보기</button>
+                                ${isSoldOut
+                                    ? `<button disabled class="py-2.5 bg-slate-300 text-white rounded-xl text-xs font-black cursor-not-allowed">일시품절</button>`
+                                    : `<button onclick="goOrderWithProduct('${encodeURIComponent(p.dbType)}')" class="py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black transition">주문신청 →</button>`
+                                }
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function openDetailModal(prdId) {
+            const p = allProducts.find(item => item.productId === prdId);
+            if (!p) return;
+            document.getElementById('detCategory').innerText = p.category;
+            document.getElementById('detMarketer').innerText = `인증마케터: ${p.marketerName}`;
+            document.getElementById('detTitle').innerText = p.dbType;
+            document.getElementById('detPrice').innerText = `${Number(p.price).toLocaleString()}원 / 건`;
+            document.getElementById('detTarget').innerText = p.targetInfo;
+            document.getElementById('detMinQty').innerText = `${p.minQty}건 이상`;
+            document.getElementById('detDesc').innerText = p.description || '-';
+            const btn = document.getElementById('detOrderBtn');
+            if (p.saleStatus === '일시품절') {
+                btn.disabled = true;
+                btn.innerText = "현재 일시품절 상품입니다";
+                btn.className = "w-full bg-slate-300 text-white font-black py-3.5 rounded-xl text-sm";
+            } else {
+                btn.disabled = false;
+                btn.innerText = "🛒 이 상품 바로 주문신청 하기 →";
+                btn.className = "w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3.5 rounded-xl text-sm transition";
+                btn.onclick = () => goOrderWithProduct(encodeURIComponent(p.dbType));
+            }
+            document.getElementById('prdDetailModal').classList.remove('hidden');
+        }
+
+        function goOrderWithProduct(encodedName) {
+            window.location.href = `index.html?view=order&product=${encodedName}`;
+        }
+
+        // 마케터 본인 상품 조회 및 수정/삭제
+        async function loadMyMarketerProducts() {
+            const listEl = document.getElementById('myMarketerProductList');
+            listEl.innerHTML = `<div class="text-center py-10 text-slate-400 text-xs">불러오는 중...</div>`;
+            try {
+                const res = await fetch(`${GAS_WEBAPP_URL}?mode=getProducts&all=true&marketerId=${encodeURIComponent(loggedUser.userId)}`);
+                const myItems = await res.json();
+                if (!myItems || myItems.length === 0) {
+                    listEl.innerHTML = `<div class="text-center py-12 text-slate-400 text-xs">아직 등록하신 DB상품이 없습니다. 좌측 폼에서 첫 상품을 등록해보세요!</div>`;
+                    return;
+                }
+                listEl.innerHTML = myItems.map(item => `
+                    <div class="border border-slate-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-blue-400 transition">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[11px] font-bold px-2 py-0.5 rounded ${item.saleStatus==='판매중'?'bg-emerald-100 text-emerald-700':(item.saleStatus==='일시품절'?'bg-amber-100 text-amber-700':'bg-slate-200 text-slate-600')}">${item.saleStatus}</span>
+                                <span class="text-[11px] text-slate-400 font-bold">${item.category}</span>
+                            </div>
+                            <h4 class="font-black text-sm text-slate-900 mt-1">${item.dbType}</h4>
+                            <p class="text-xs font-bold text-blue-600 mt-0.5">${Number(item.price).toLocaleString()}원 / 최소 ${item.minQty}건</p>
+                        </div>
+                        <div class="flex items-center gap-2 shrink-0 text-xs font-bold">
+                            <button onclick='fillEditProduct(${JSON.stringify(item).replace(/'/g, "&#39;")})' class="px-3 py-1.5 border border-slate-300 rounded-lg hover:bg-slate-50 text-slate-700">설정/수정</button>
+                            <button onclick="deleteMyProduct('${item.productId}')" class="px-3 py-1.5 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg">삭제</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                listEl.innerHTML = `<div class="text-center py-10 text-rose-500 text-xs">조회 오류</div>`;
+            }
+        }
+
+        function fillEditProduct(item) {
+            document.getElementById('formTitle').innerText = "✏️ 내 DB상품 설정 수정";
+            document.getElementById('editProductId').value = item.productId;
+            document.getElementById('prdCategory').value = item.category;
+            document.getElementById('prdSaleStatus').value = item.saleStatus;
+            document.getElementById('prdName').value = item.dbType;
+            document.getElementById('prdPrice').value = item.price;
+            document.getElementById('prdMinQty').value = item.minQty;
+            document.getElementById('prdTarget').value = item.targetInfo;
+            document.getElementById('prdTags').value = item.tags;
+            document.getElementById('prdDesc').value = item.description;
+            document.getElementById('prdSubmitBtn').innerText = "수정 내용 저장하기";
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function resetProductForm() {
+            document.getElementById('formTitle').innerText = "➕ 신규 DB상품 등록";
+            document.getElementById('editProductId').value = "";
+            document.getElementById('prdName').value = "";
+            document.getElementById('prdPrice').value = "";
+            document.getElementById('prdMinQty').value = "10";
+            document.getElementById('prdTarget').value = "";
+            document.getElementById('prdTags').value = "";
+            document.getElementById('prdDesc').value = "";
+            document.getElementById('prdSaleStatus').value = "판매중";
+            document.getElementById('prdSubmitBtn').innerText = "상품 저장 및 주문신청 자동 연동하기";
+        }
+
+        async function submitProductForm(e) {
+            e.preventDefault();
+            const editId = document.getElementById('editProductId').value.trim();
+            const btn = document.getElementById('prdSubmitBtn');
+            btn.disabled = true;
+            btn.innerText = "저장 중...";
+
+            const payload = {
+                action: editId ? "updateProduct" : "registerProduct",
+                productId: editId,
+                userId: loggedUser.userId,
+                category: document.getElementById('prdCategory').value,
+                saleStatus: document.getElementById('prdSaleStatus').value,
+                dbType: document.getElementById('prdName').value.trim(),
+                price: Number(document.getElementById('prdPrice').value),
+                minQty: Number(document.getElementById('prdMinQty').value),
+                targetInfo: document.getElementById('prdTarget').value.trim(),
+                tags: document.getElementById('prdTags').value.trim(),
+                description: document.getElementById('prdDesc').value.trim()
+            };
+
+            try {
+                const res = await fetch(GAS_WEBAPP_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                alert(data.message);
+                if (data.success) {
+                    resetProductForm();
+                    await loadMyMarketerProducts();
+                    await loadAllProducts();
+                }
+            } catch (err) {
+                alert("저장 중 통신 오류가 발생했습니다.");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "상품 저장 및 주문신청 자동 연동하기";
+            }
+        }
+
+        async function deleteMyProduct(productId) {
+            if (!confirm("이 상품을 정말 삭제하시겠습니까? 메인 주문신청 목록에서도 제거됩니다.")) return;
+            try {
+                const res = await fetch(GAS_WEBAPP_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: "deleteProduct", userId: loggedUser.userId, productId: productId })
+                });
+                const data = await res.json();
+                alert(data.message);
+                if (data.success) {
+                    await loadMyMarketerProducts();
+                    await loadAllProducts();
+                }
+            } catch (e) {
+                alert("삭제 중 오류가 발생했습니다.");
+            }
+        }
+
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = err => reject(err);
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // 마케터 검증 서류 업로드 및 신청
+        async function submitMarketerApplication(e) {
+            e.preventDefault();
+            if (!loggedUser.userId) {
+                alert("로그인 후 신청 가능합니다.");
+                return;
+            }
+            const bizFile = document.getElementById('mkBizFile').files[0];
+            const consentFile = document.getElementById('mkConsentFile').files[0];
+            if (!bizFile || !consentFile) {
+                alert("사업자등록증과 제3자 동의 증빙서류 2종을 모두 첨부해주세요.");
+                return;
+            }
+
+            const btn = document.getElementById('mkApplySubmitBtn');
+            btn.disabled = true;
+            btn.innerText = "⏳ 검증 서류 구글 드라이브 업로드 중...";
+
+            try {
+                const bizBase64 = await fileToBase64(bizFile);
+                const consentBase64 = await fileToBase64(consentFile);
+
+                const payload = {
+                    action: "applyMarketer",
+                    userId: loggedUser.userId,
+                    name: loggedUser.name,
+                    phone: loggedUser.phone,
+                    email: loggedUser.email,
+                    bizName: document.getElementById('mkBizName').value.trim(),
+                    bizNo: document.getElementById('mkBizNo').value.trim(),
+                    mediaDesc: document.getElementById('mkMediaDesc').value.trim(),
+                    thirdPartyConsent: document.getElementById('mkConsentCheck').value,
+                    bizFileName: bizFile.name,
+                    bizFileMime: bizFile.type,
+                    bizFileBase64: bizBase64,
+                    consentFileName: consentFile.name,
+                    consentFileMime: consentFile.type,
+                    consentFileBase64: consentBase64
+                };
+
+                const res = await fetch(USER_DB_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                alert(data.message);
+                if (data.success) {
+                    await checkMyMarketerStatus();
+                    switchProductTab('showcase');
+                }
+            } catch (err) {
+                alert("서류 업로드 중 오류가 발생했습니다. 파일 용량(10MB 이하 권장)을 확인해주세요.");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "검증 서류 제출 및 마케터 승인 요청하기";
+            }
+        }
+
+        function openDbAssign() {
+            if (!loggedUser.userId) {
+                alert("로그인 후 이용해주세요.");
+                window.location.href = "index.html?login=true";
+            } else if (loggedUser.status !== '승인') {
+                alert("관리자 승인 대기 중입니다.");
+            } else {
+                window.open('db_assign.html', 'datumDbWindow');
+            }
+        }
+    </script>
+</body>
+</html>
